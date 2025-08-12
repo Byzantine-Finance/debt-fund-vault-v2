@@ -1,0 +1,11 @@
+{
+  "addresses": {
+    "morphoMarketV1AdapterFactory": "0xf21189365131551Ba4c3613252B1bcCdA60BD1e6",
+    "morphoVaultV1AdapterFactory": "0xbA98A4d436e79639A1598aFc988eFB7A828d7F08",
+    "vaultV2Factory": "0x9615550EA8Fa52bdAC83de3FC9A280dBa3D981eE"
+  },
+  "chainInfo": {
+    "chainId": 8453,
+    "deploymentBlock": 34102709
+  }
+}
