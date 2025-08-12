@@ -5,6 +5,9 @@ optimizer_runs = 100000
 bytecode_hash = "none"
 evm_version = "cancun"
 dynamic_test_linking = true
+fs_permissions = [
+  { access = "read-write", path = "./script" }
+]
 
 [profile.default.fmt]
 wrap_comments = true
