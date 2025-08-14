@@ -7,26 +7,26 @@ import {ErrorsLib} from "./ErrorsLib.sol";
 
 library SafeERC20Lib {
     function safeTransfer(address token, address to, uint256 value) internal {
-        require(token.code.length > 0, ErrorsLib.NoCode());
+        if (token.code.length == 0) revert ErrorsLib.NoCode();
 
         (bool success, bytes memory returndata) = token.call(abi.encodeCall(IERC20.transfer, (to, value)));
-        require(success, ErrorsLib.TransferReverted());
-        require(returndata.length == 0 || abi.decode(returndata, (bool)), ErrorsLib.TransferReturnedFalse());
+        if (!success) revert ErrorsLib.TransferReverted();
+        if (returndata.length != 0 && !abi.decode(returndata, (bool))) revert ErrorsLib.TransferReturnedFalse();
     }
 
     function safeTransferFrom(address token, address from, address to, uint256 value) internal {
-        require(token.code.length > 0, ErrorsLib.NoCode());
+        if (token.code.length == 0) revert ErrorsLib.NoCode();
 
         (bool success, bytes memory returndata) = token.call(abi.encodeCall(IERC20.transferFrom, (from, to, value)));
-        require(success, ErrorsLib.TransferFromReverted());
-        require(returndata.length == 0 || abi.decode(returndata, (bool)), ErrorsLib.TransferFromReturnedFalse());
+        if (!success) revert ErrorsLib.TransferFromReverted();
+        if (returndata.length != 0 && !abi.decode(returndata, (bool))) revert ErrorsLib.TransferFromReturnedFalse();
     }
 
     function safeApprove(address token, address spender, uint256 value) internal {
-        require(token.code.length > 0, ErrorsLib.NoCode());
+        if (token.code.length == 0) revert ErrorsLib.NoCode();
 
         (bool success, bytes memory returndata) = token.call(abi.encodeCall(IERC20.approve, (spender, value)));
-        require(success, ErrorsLib.ApproveReverted());
-        require(returndata.length == 0 || abi.decode(returndata, (bool)), ErrorsLib.ApproveReturnedFalse());
+        if (!success) revert ErrorsLib.ApproveReverted();
+        if (returndata.length != 0 && !abi.decode(returndata, (bool))) revert ErrorsLib.ApproveReturnedFalse();
     }
 }
