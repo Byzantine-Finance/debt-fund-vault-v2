@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.15;
+pragma solidity 0.8.28;
 
-import {CometInterface} from "../../lib/comet/contracts/CometInterface.sol";
+import {CometInterface} from "../interfaces/CometInterface.sol";
 import {IVaultV2} from "../interfaces/IVaultV2.sol";
 import {IERC20} from "../interfaces/IERC20.sol";
 import {ICompoundV3Adapter} from "./interfaces/ICompoundV3Adapter.sol";
