@@ -75,8 +75,8 @@ contract CompoundV3Adapter is ICompoundV3Adapter {
 
         return (ids(), int256(newAllocation) - int256(oldAllocation));
     }
-    /// @dev Returns adapter's ids.
 
+    /// @dev Returns adapter's ids.
     function ids() public view returns (bytes32[] memory) {
         bytes32[] memory ids_ = new bytes32[](1);
         ids_[0] = adapterId;
