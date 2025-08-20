@@ -14,6 +14,7 @@ contract CompoundV3Adapter is ICompoundV3Adapter {
     address public immutable parentVault;
     address public immutable asset;
     address public immutable comet;
+    address public immutable cometRewards;
     bytes32 public immutable adapterId;
 
     /* STORAGE */
@@ -22,10 +23,11 @@ contract CompoundV3Adapter is ICompoundV3Adapter {
 
     /* FUNCTIONS */
 
-    constructor(address _parentVault, address _comet) {
+    constructor(address _parentVault, address _comet, address _cometRewards) {
         factory = msg.sender;
         parentVault = _parentVault;
         comet = _comet;
+        cometRewards = _cometRewards;
         adapterId = keccak256(abi.encode("this", address(this)));
         asset = IVaultV2(_parentVault).asset();
         SafeERC20Lib.safeApprove(asset, _comet, type(uint256).max);

@@ -11,6 +11,7 @@ import {ICompoundV3AdapterFactory} from "../../src/adapters/interfaces/ICompound
 import {ICompoundV3Adapter} from "../../src/adapters/interfaces/ICompoundV3Adapter.sol";
 
 import {CometInterface} from "../../src/interfaces/CometInterface.sol";
+import {CometRewardsInterface} from "../../src/interfaces/CometRewardsInterface.sol";
 
 import {Test, console2} from "../../lib/forge-std/src/Test.sol";
 
@@ -20,6 +21,7 @@ contract CompoundV3IntegrationTest is Test {
 
     // Addresses of Comet USDC and USDC on Ethereum Mainnet
     CometInterface internal comet = CometInterface(0xc3d688B66703497DAA19211EEdff47f25384cdc3);
+    CometRewardsInterface internal cometRewards = CometRewardsInterface(0x1B0e765F6224C21223AeA2af16c1C46E38885a40);
     IERC20 internal usdc = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
     IERC20 internal cbBTC = IERC20(0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf);
     IERC20 internal wstETH = IERC20(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0);
@@ -59,8 +61,9 @@ contract CompoundV3IntegrationTest is Test {
         vm.label(address(vault), "vault");
 
         compoundAdapterFactory = ICompoundV3AdapterFactory(address(new CompoundV3AdapterFactory()));
-        compoundAdapter =
-            ICompoundV3Adapter(compoundAdapterFactory.createCompoundV3Adapter(address(vault), address(comet)));
+        compoundAdapter = ICompoundV3Adapter(
+            compoundAdapterFactory.createCompoundV3Adapter(address(vault), address(comet), address(cometRewards))
+        );
         expectedAdapterIdData = abi.encode("this", address(compoundAdapter));
         expectedAdapterId = keccak256(expectedAdapterIdData);
         vm.label(address(compoundAdapter), "compoundAdapter");

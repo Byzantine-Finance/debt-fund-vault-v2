@@ -20,6 +20,7 @@ interface ICompoundV3Adapter is IAdapter {
     function parentVault() external view returns (address);
     function asset() external view returns (address);
     function comet() external view returns (address);
+    function cometRewards() external view returns (address);
     function adapterId() external view returns (bytes32);
     function skimRecipient() external view returns (address);
     function allocation() external view returns (uint256);
