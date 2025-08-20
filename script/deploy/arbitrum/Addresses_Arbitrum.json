@@ -1,0 +1,12 @@
+{
+  "addresses": {
+    "compoundV3AdapterFactory": "0x9615550EA8Fa52bdAC83de3FC9A280dBa3D981eE",
+    "morphoMarketV1AdapterFactory": "0xA8b523fcf34F2f63d26e709a16c9bC41801f1fC9",
+    "morphoVaultV1AdapterFactory": "0x53DB20783687cea8A2dF0dd6b47e977B90f85E2F",
+    "vaultV2Factory": "0x4D4A1eF022410b1a5c04049E5c3b1651FDd9EcBA"
+  },
+  "chainInfo": {
+    "chainId": 42161,
+    "deploymentBlock": 23183318
+  }
+}
