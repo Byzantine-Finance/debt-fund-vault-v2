@@ -6,11 +6,16 @@ import {IAdapter} from "../../src/interfaces/IAdapter.sol";
 import {IVaultV2} from "../../src/interfaces/IVaultV2.sol";
 import {IERC20} from "../../src/interfaces/IERC20.sol";
 import {MathLib} from "../../src/libraries/MathLib.sol";
+import {SafeERC20Lib} from "../../src/libraries/SafeERC20Lib.sol";
+import {SwapLib} from "../../src/libraries/SwapLib.sol";
+import {ILifiMinimal} from "../../src/interfaces/ILifiMinimal.sol";
 
 contract AdapterMock is IAdapter {
     using MathLib for uint256;
 
     address public immutable vault;
+    // USDC address on mainnet
+    address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
 
     bytes32[] public _ids;
     uint256 public interest;
@@ -23,6 +28,17 @@ contract AdapterMock is IAdapter {
     uint256 public recordedDeallocateAssets;
     bytes4 public recordedSelector;
     address public recordedSender;
+
+    ILifiMinimal public lifiDiamond;
+
+    struct ClaimRewardsInputs {
+        address token;
+        uint256 rewardsAmount;
+        uint256 minAmountOut;
+        ILifiMinimal.SwapData swapData;
+        string integrator;
+        string referrer;
+    }
 
     constructor(address _vault) {
         vault = _vault;
@@ -69,4 +85,36 @@ contract AdapterMock is IAdapter {
     function realAssets() external view returns (uint256) {
         return deposit + interest - loss;
     }
+
+    /// Set the LiFiDiamond address
+    function setLifiDiamond(address _lifiDiamond) external {
+        lifiDiamond = ILifiMinimal(_lifiDiamond);
+    }
+
+    /// @dev for testing purposes, we transfer the ERC20 tokens from the caller to the adapter to simulate the claim
+    function claimRewards(ClaimRewardsInputs calldata _inputs) external {
+        // Verify that the receiving asset is USDC
+        address receivingAsset = _inputs.swapData.receivingAssetId;
+        if (receivingAsset != USDC) revert InvalidReceivingAsset(receivingAsset);
+
+        // Fake the claim by transferring the tokens to the adapter
+        SafeERC20Lib.safeTransferFrom(_inputs.token, msg.sender, address(this), _inputs.rewardsAmount);
+
+        // Call the swap function on the SwapLib contract
+        // 1. Send the tokens to the LiFiDiamond
+        // 2. Call underlying Dex swap function to swap the tokens to USDC
+        // 3. Send the USDC to the vault
+        SwapLib.swap(
+            lifiDiamond,
+            "",
+            _inputs.integrator,
+            _inputs.referrer,
+            payable(vault),
+            _inputs.minAmountOut,
+            _inputs.swapData
+        );
+    }
+
+    // Errors
+    error InvalidReceivingAsset(address _receivingAssetId);
 }
