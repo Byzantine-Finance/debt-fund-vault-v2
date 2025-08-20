@@ -53,6 +53,7 @@ contract CompoundV3IntegrationTest is Test {
         vm.label(address(this), "testContract");
         vm.label(address(usdc), "usdc");
         vm.label(address(comet), "comet");
+        vm.label(address(cometRewards), "cometRewards");
 
         /* VAULT SETUP */
 
