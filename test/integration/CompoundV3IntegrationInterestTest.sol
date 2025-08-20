@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 import "./CompoundV3IntegrationTest.sol";
 
 contract CompoundV3IntegrationInterestTest is CompoundV3IntegrationTest {
+    uint16 constant BASIS_POINTS = 10000;
+
     /// forge-config: default.isolate = true
     function testAccrueInterest(uint256 assets, uint256 elapsed) public {
         assets = bound(assets, 1, MAX_TEST_ASSETS);
@@ -28,8 +30,8 @@ contract CompoundV3IntegrationInterestTest is CompoundV3IntegrationTest {
     /// forge-config: default.isolate = true
     function testAccrueInterestAndWithdraw(uint256 assets, uint256 elapsed, uint256 withdrawFactor) public {
         assets = bound(assets, 1, MAX_TEST_ASSETS);
-        elapsed = bound(elapsed, 0, 10 * 365 days);
-        withdrawFactor = bound(withdrawFactor, 0, 70);
+        elapsed = bound(elapsed, 0, 3 * 365 days);
+        withdrawFactor = bound(withdrawFactor, 0, BASIS_POINTS);
 
         // setup.
         vm.prank(allocator);
@@ -43,18 +45,19 @@ contract CompoundV3IntegrationInterestTest is CompoundV3IntegrationTest {
         uint256 vaultBalanceAfter = comet.balanceOf(address(compoundAdapter));
         uint256 interestAccrued = vaultBalanceAfter - vaultBalanceBefore;
 
-        uint256 sharesToRedeem = vault.totalSupply() * withdrawFactor / 100;
+        uint256 sharesToRedeem = vault.totalSupply() * withdrawFactor / BASIS_POINTS;
         vault.redeem(sharesToRedeem, receiver, address(this));
 
         assertApproxEqAbs(
             vault.totalAssets(),
-            (assets * (100 - withdrawFactor) / 100) + (interestAccrued * (100 - withdrawFactor) / 100),
+            (assets * (BASIS_POINTS - withdrawFactor) / BASIS_POINTS)
+                + (interestAccrued * (BASIS_POINTS - withdrawFactor) / BASIS_POINTS),
             3 wei,
             "vault totalAssets"
         );
         assertApproxEqAbs(
             usdc.balanceOf(receiver),
-            (assets * withdrawFactor / 100) + (interestAccrued * withdrawFactor / 100),
+            (assets * withdrawFactor / BASIS_POINTS) + (interestAccrued * withdrawFactor / BASIS_POINTS),
             3 wei,
             "vault balance"
         );

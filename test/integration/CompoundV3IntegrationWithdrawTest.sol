@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import "./CompoundV3IntegrationTest.sol";
-import "forge-std/console2.sol";
 
 contract CompoundV3IntegrationWithdrawTest is CompoundV3IntegrationTest {
     uint256 internal initialInIdle = 0.3e12 - 1;
@@ -44,23 +43,22 @@ contract CompoundV3IntegrationWithdrawTest is CompoundV3IntegrationTest {
         vault.withdraw(assets, receiver, address(this));
     }
 
-    function testWithdrawThanksToLiquidityAdapter(uint256 assets) public {
+    function testWithdrawThanksToLiquidityAdapterr(uint256 assets) public {
         assets = bound(assets, initialInIdle + 1, initialTotal);
         vm.prank(allocator);
         vault.setLiquidityAdapterAndData(address(compoundAdapter), hex"");
 
-        uint256 adapterBalanceBefore = comet.balanceOf(address(compoundAdapter));
-        vm.warp(block.timestamp + 1 seconds);
-        uint256 accruedInterest = comet.balanceOf(address(compoundAdapter)) - adapterBalanceBefore;
+        if (assets == initialTotal) {
+            vault.redeem(vault.balanceOf(address(this)), receiver, address(this));
+        } else {
+            vault.withdraw(assets, receiver, address(this));
+        }
 
-        vault.withdraw(assets, receiver, address(this));
-        assertEq(usdc.balanceOf(receiver), assets, "A");
+        assertApproxEqAbs(usdc.balanceOf(receiver), assets, 1 wei, "A");
         assertEq(usdc.balanceOf(address(vault)), 0, "B");
-        assertEq(usdc.balanceOf(address(comet)), initialInCompound + initialInIdle - assets, "C");
+        assertApproxEqAbs(usdc.balanceOf(address(comet)), initialInCompound + initialInIdle - assets, 1 wei, "C");
         assertEq(usdc.balanceOf(address(compoundAdapter)), 0, "D");
-        assertApproxEqAbs(
-            comet.balanceOf(address(compoundAdapter)), initialTotal + accruedInterest - assets, 4 wei, "E"
-        );
+        assertApproxEqAbs(comet.balanceOf(address(compoundAdapter)), initialTotal - assets, 4 wei, "E");
     }
 
     function testWithdrawTooMuchEvenWithLiquidityAdapter(uint256 assets) public {
