@@ -90,7 +90,7 @@ contract CompoundV3Adapter is ICompoundV3Adapter {
     function claim() external {
         if (msg.sender != claimer) revert NotAuthorized();
 
-        address rewardToken = CometRewardsInterface(cometRewards).rewardConfigs(comet).token;
+        address rewardToken = CometRewardsInterface(cometRewards).rewardConfig(comet).token;
 
         uint256 balanceBefore = IERC20(rewardToken).balanceOf(address(this));
         CometRewardsInterface(cometRewards).claim(comet, address(this), true);
