@@ -2,6 +2,7 @@
 pragma solidity 0.8.28;
 
 import {CometInterface} from "../interfaces/CometInterface.sol";
+import {CometRewardsInterface} from "../interfaces/CometRewardsInterface.sol";
 import {IVaultV2} from "../interfaces/IVaultV2.sol";
 import {IERC20} from "../interfaces/IERC20.sol";
 import {ICompoundV3Adapter} from "./interfaces/ICompoundV3Adapter.sol";
@@ -20,6 +21,7 @@ contract CompoundV3Adapter is ICompoundV3Adapter {
     /* STORAGE */
 
     address public skimRecipient;
+    address public claimer;
 
     /* FUNCTIONS */
 
@@ -32,6 +34,12 @@ contract CompoundV3Adapter is ICompoundV3Adapter {
         asset = IVaultV2(_parentVault).asset();
         SafeERC20Lib.safeApprove(asset, _comet, type(uint256).max);
         SafeERC20Lib.safeApprove(asset, _parentVault, type(uint256).max);
+    }
+
+    function setClaimer(address newClaimer) external {
+        if (msg.sender != IVaultV2(parentVault).curator()) revert NotAuthorized();
+        claimer = newClaimer;
+        emit SetClaimer(newClaimer);
     }
 
     function setSkimRecipient(address newSkimRecipient) external {
@@ -76,6 +84,19 @@ contract CompoundV3Adapter is ICompoundV3Adapter {
         uint256 newAllocation = CometInterface(comet).balanceOf(address(this));
 
         return (ids(), int256(newAllocation) - int256(oldAllocation));
+    }
+
+    /// @dev Claims COMP rewards accumulated by the adapter
+    function claim() external {
+        if (msg.sender != claimer) revert NotAuthorized();
+
+        address rewardToken = CometRewardsInterface(cometRewards).rewardConfigs(comet).token;
+
+        uint256 balanceBefore = IERC20(rewardToken).balanceOf(address(this));
+        CometRewardsInterface(cometRewards).claim(comet, address(this), true);
+        uint256 balanceAfter = IERC20(rewardToken).balanceOf(address(this));
+
+        emit Claim(rewardToken, balanceAfter - balanceBefore);
     }
 
     /// @dev Returns adapter's ids.
