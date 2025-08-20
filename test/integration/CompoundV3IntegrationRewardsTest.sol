@@ -29,7 +29,8 @@ contract CompoundV3IntegrationRewardsTest is CompoundV3IntegrationTest {
     function testClaimRewards(uint256 elapsed) public {
         elapsed = bound(elapsed, 0, 365 days);
 
-        CometRewardsInterface.RewardOwed memory rewardOwed = cometRewards.getRewardOwed(address(comet), address(compoundAdapter));
+        CometRewardsInterface.RewardOwed memory rewardOwed =
+            cometRewards.getRewardOwed(address(comet), address(compoundAdapter));
         address rewardToken = rewardOwed.token;
         uint256 rewardsBefore = rewardOwed.owed;
 
