@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {VaultV2Factory} from "../../../src/VaultV2Factory.sol";
 import {MorphoMarketV1AdapterFactory} from "../../../src/adapters/MorphoMarketV1AdapterFactory.sol";
 import {MorphoVaultV1AdapterFactory} from "../../../src/adapters/MorphoVaultV1AdapterFactory.sol";
+import {CompoundV3AdapterFactory} from "../../../src/adapters/CompoundV3AdapterFactory.sol";
 
 import "forge-std/Script.sol";
 import "forge-std/Test.sol";
@@ -19,6 +20,7 @@ contract Deploy_Base_From_Scratch is Script, Test {
     VaultV2Factory public vaultV2Factory;
     MorphoMarketV1AdapterFactory public morphoMarketV1AdapterFactory;
     MorphoVaultV1AdapterFactory public morphoVaultV1AdapterFactory;
+    CompoundV3AdapterFactory public compoundV3AdapterFactory;
 
     function run() external {
         // START RECORDING TRANSACTIONS FOR DEPLOYMENT
@@ -39,6 +41,7 @@ contract Deploy_Base_From_Scratch is Script, Test {
         vaultV2Factory = new VaultV2Factory();
         morphoMarketV1AdapterFactory = new MorphoMarketV1AdapterFactory();
         morphoVaultV1AdapterFactory = new MorphoVaultV1AdapterFactory();
+        compoundV3AdapterFactory = new CompoundV3AdapterFactory();
     }
 
     function _logAndOutputContractAddresses(string memory outputPath) internal {
@@ -48,6 +51,7 @@ contract Deploy_Base_From_Scratch is Script, Test {
         string memory chain_info = "chainInfo";
 
         vm.serializeAddress(deployed_addresses, "vaultV2Factory", address(vaultV2Factory));
+        vm.serializeAddress(deployed_addresses, "compoundV3AdapterFactory", address(compoundV3AdapterFactory));
         vm.serializeAddress(deployed_addresses, "morphoMarketV1AdapterFactory", address(morphoMarketV1AdapterFactory));
         string memory deployed_addresses_output =
             vm.serializeAddress(deployed_addresses, "morphoVaultV1AdapterFactory", address(morphoVaultV1AdapterFactory));
