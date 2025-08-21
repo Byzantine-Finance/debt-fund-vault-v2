@@ -9,6 +9,7 @@ interface IERC4626Adapter is IAdapter {
 
     event SetSkimRecipient(address indexed newSkimRecipient);
     event SetClaimer(address indexed newClaimer);
+    event SetMerklDistributor(address indexed newMerklDistributor);
     event Skim(address indexed token, uint256 assets);
     event ClaimRewards(address[] indexed users, address[] indexed tokens, uint256[] amounts);
 
@@ -33,6 +34,7 @@ interface IERC4626Adapter is IAdapter {
     function ids() external view returns (bytes32[] memory);
     function setSkimRecipient(address newSkimRecipient) external;
     function setClaimer(address newClaimer) external;
+    function setMerklDistributor(address newMerklDistributor) external;
     function skim(address token) external;
     function claim(bytes calldata data) external;
 }

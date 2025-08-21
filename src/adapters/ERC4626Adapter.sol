@@ -36,21 +36,20 @@ contract ERC4626Adapter is IERC4626Adapter {
     address public immutable factory;
     address public immutable parentVault;
     address public immutable erc4626Vault;
-    address public immutable merklDistributor;
     bytes32 public immutable adapterId;
 
     /* STORAGE */
 
     address public skimRecipient;
     address public claimer;
+    address public merklDistributor;
 
     /* FUNCTIONS */
 
-    constructor(address _parentVault, address _erc4626Vault, address _merklDistributor) {
+    constructor(address _parentVault, address _erc4626Vault) {
         factory = msg.sender;
         parentVault = _parentVault;
         erc4626Vault = _erc4626Vault;
-        merklDistributor = _merklDistributor;
         adapterId = keccak256(abi.encode("this", address(this)));
         address asset = IVaultV2(_parentVault).asset();
         require(asset == IERC4626(_erc4626Vault).asset(), AssetMismatch());
@@ -68,6 +67,12 @@ contract ERC4626Adapter is IERC4626Adapter {
         if (msg.sender != IVaultV2(parentVault).curator()) revert NotAuthorized();
         claimer = newClaimer;
         emit SetClaimer(newClaimer);
+    }
+
+    function setMerklDistributor(address newMerklDistributor) external {
+        if (msg.sender != IVaultV2(parentVault).curator()) revert NotAuthorized();
+        merklDistributor = newMerklDistributor;
+        emit SetMerklDistributor(newMerklDistributor);
     }
 
     /// @dev Skims the adapter's balance of `token` and sends it to `skimRecipient`.

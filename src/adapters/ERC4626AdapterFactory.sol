@@ -14,12 +14,8 @@ contract ERC4626AdapterFactory is IERC4626AdapterFactory {
     /* FUNCTIONS */
 
     /// @dev Returns the address of the deployed ERC4626Adapter.
-    function createERC4626Adapter(address parentVault, address erc4626Vault, address merklDistributor)
-        external
-        returns (address)
-    {
-        address _erc4626Adapter =
-            address(new ERC4626Adapter{salt: bytes32(0)}(parentVault, erc4626Vault, merklDistributor));
+    function createERC4626Adapter(address parentVault, address erc4626Vault) external returns (address) {
+        address _erc4626Adapter = address(new ERC4626Adapter{salt: bytes32(0)}(parentVault, erc4626Vault));
         erc4626Adapter[parentVault][erc4626Vault] = _erc4626Adapter;
         isERC4626Adapter[_erc4626Adapter] = true;
         emit CreateERC4626Adapter(parentVault, erc4626Vault, _erc4626Adapter);

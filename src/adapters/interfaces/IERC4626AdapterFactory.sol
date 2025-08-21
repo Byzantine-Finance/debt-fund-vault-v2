@@ -13,7 +13,7 @@ interface IERC4626AdapterFactory {
 
     function erc4626Adapter(address parentVault, address erc4626Vault) external view returns (address);
     function isERC4626Adapter(address account) external view returns (bool);
-    function createERC4626Adapter(address parentVault, address erc4626Vault, address merklDistributor)
+    function createERC4626Adapter(address parentVault, address erc4626Vault)
         external
         returns (address erc4626Adapter);
 }

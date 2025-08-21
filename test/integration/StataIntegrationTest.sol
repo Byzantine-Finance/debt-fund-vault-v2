@@ -78,8 +78,7 @@ contract StataIntegrationTest is BaseTest {
 
         // Deploy adapter factory and create Stata adapter
         adapterFactory = new ERC4626AdapterFactory();
-        stataAdapter =
-            IERC4626Adapter(adapterFactory.createERC4626Adapter(address(vault), STATA_USDC, MERKL_DISTRIBUTOR));
+        stataAdapter = IERC4626Adapter(adapterFactory.createERC4626Adapter(address(vault), STATA_USDC));
 
         // Set up adapter
         vm.prank(curator);
