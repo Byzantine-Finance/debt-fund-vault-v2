@@ -6,7 +6,10 @@ import {CometRewardsInterface} from "../interfaces/CometRewardsInterface.sol";
 import {IVaultV2} from "../interfaces/IVaultV2.sol";
 import {IERC20} from "../interfaces/IERC20.sol";
 import {ICompoundV3Adapter} from "./interfaces/ICompoundV3Adapter.sol";
+import {ILifiMinimal} from "../interfaces/ILifiMinimal.sol";
 import {SafeERC20Lib} from "../libraries/SafeERC20Lib.sol";
+import {SwapLib} from "../libraries/SwapLib.sol";
+import "../libraries/ConstantsLib.sol";
 
 contract CompoundV3Adapter is ICompoundV3Adapter {
     /* IMMUTABLES */
@@ -87,9 +90,12 @@ contract CompoundV3Adapter is ICompoundV3Adapter {
     }
 
     /// @dev Claims COMP rewards accumulated by the adapter
-    function claim() external {
+    function claim(bytes calldata data) external {
         if (msg.sender != claimer) revert NotAuthorized();
+        (address callTo, address approveTo, bytes memory dexData, uint256 minAmountOut, bytes32 transactionId) =
+            abi.decode(data, (address, address, bytes, uint256, bytes32));
 
+        // Claim the rewards
         address rewardToken = CometRewardsInterface(cometRewards).rewardConfig(comet).token;
 
         uint256 balanceBefore = IERC20(rewardToken).balanceOf(address(this));
@@ -97,6 +103,28 @@ contract CompoundV3Adapter is ICompoundV3Adapter {
         uint256 balanceAfter = IERC20(rewardToken).balanceOf(address(this));
 
         emit Claim(rewardToken, balanceAfter - balanceBefore);
+
+        // prepare swap data
+        ILifiMinimal.SwapData memory swapData = ILifiMinimal.SwapData({
+            callTo: callTo,
+            approveTo: approveTo,
+            sendingAssetId: rewardToken,
+            receivingAssetId: USDC,
+            fromAmount: balanceAfter,
+            callData: dexData,
+            requiresDeposit: false
+        });
+
+        // Swap the rewards
+        SwapLib.swap(
+            ILifiMinimal(LIFI_DIAMOND),
+            transactionId,
+            INTEGRATOR,
+            INTEGRATOR,
+            payable(parentVault),
+            minAmountOut,
+            swapData
+        );
     }
 
     /// @dev Returns adapter's ids.

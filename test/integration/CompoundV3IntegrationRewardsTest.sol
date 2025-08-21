@@ -41,8 +41,10 @@ contract CompoundV3IntegrationRewardsTest is CompoundV3IntegrationTest {
         vm.expectEmit();
         emit ICompoundV3Adapter.Claim(rewardToken, rewardsAfter - rewardsBefore);
 
+        bytes memory data = abi.encode(address(0), address(0), bytes(""), 0, bytes32(0));
+
         vm.prank(claimer);
-        compoundAdapter.claim();
+        compoundAdapter.claim(data);
 
         assertEq(cometRewards.rewardsClaimed(address(comet), address(compoundAdapter)), rewardsAfter - rewardsBefore);
         assertEq(IERC20(rewardToken).balanceOf(address(compoundAdapter)), rewardsAfter - rewardsBefore);

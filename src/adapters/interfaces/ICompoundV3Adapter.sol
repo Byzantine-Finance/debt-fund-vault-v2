@@ -29,7 +29,7 @@ interface ICompoundV3Adapter is IAdapter {
     function allocation() external view returns (uint256);
     function ids() external view returns (bytes32[] memory);
     function setClaimer(address newClaimer) external;
-    function claim() external;
+    function claim(bytes calldata data) external;
     function setSkimRecipient(address newSkimRecipient) external;
     function skim(address token) external;
 }
