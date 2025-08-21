@@ -92,7 +92,6 @@ contract ERC4626Adapter is IERC4626Adapter {
 
         // Call the Merkl distributor
         IMerklDistributor(merklDistributor).claim(params.users, params.tokens, params.amounts, params.proofs);
-        
         emit ClaimRewards(params.users, params.tokens, params.amounts);
     }
 

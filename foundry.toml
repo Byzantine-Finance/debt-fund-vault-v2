@@ -6,7 +6,8 @@ bytecode_hash = "none"
 evm_version = "cancun"
 dynamic_test_linking = true
 fs_permissions = [
-  { access = "read-write", path = "./script" }
+  { access = "read-write", path = "./script" },
+  { access = "read", path = "./test/data" }
 ]
 
 [profile.default.fmt]
