@@ -65,6 +65,7 @@ contract ERC4626Adapter is IERC4626Adapter {
 
     function setClaimer(address newClaimer) external {
         if (msg.sender != IVaultV2(parentVault).curator()) revert NotAuthorized();
+        require(merklDistributor != address(0), MerklDistributorNotSet());
         claimer = newClaimer;
         emit SetClaimer(newClaimer);
     }
@@ -90,7 +91,6 @@ contract ERC4626Adapter is IERC4626Adapter {
     /// @param data Encoded MerklParams struct containing users, tokens, amounts, and proofs
     function claim(bytes calldata data) external {
         require(msg.sender == claimer, NotAuthorized());
-        require(merklDistributor != address(0), MerklDistributorNotSet());
 
         // Decode the claim data to MerklParams struct
         MerklParams memory params = abi.decode(data, (MerklParams));
