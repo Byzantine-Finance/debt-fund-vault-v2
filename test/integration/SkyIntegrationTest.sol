@@ -60,9 +60,7 @@ contract SkyIntegrationTest is Test {
         vm.label(address(vault), "vault");
 
         erc4626AdapterFactory = IERC4626AdapterFactory(address(new ERC4626AdapterFactory()));
-        skyAdapter = IERC4626Adapter(
-            erc4626AdapterFactory.createERC4626Adapter(address(vault), address(sUSDC))
-        );
+        skyAdapter = IERC4626Adapter(erc4626AdapterFactory.createERC4626Adapter(address(vault), address(sUSDC)));
         expectedAdapterIdData = abi.encode("this", address(skyAdapter));
         expectedAdapterId = keccak256(expectedAdapterIdData);
         vm.label(address(skyAdapter), "skyAdapter");
@@ -109,7 +107,9 @@ contract SkyIntegrationTest is Test {
         vault.deposit(assets, address(this));
 
         assertEq(sUSDC.balanceOf(address(skyAdapter)), expectedReceivedShares, "adapter sUSDC balance");
-        assertApproxEqAbs(sUSDC.convertToAssets(sUSDC.balanceOf(address(skyAdapter))), assets, 1 wei, "adapter sUSDC conversion");
+        assertApproxEqAbs(
+            sUSDC.convertToAssets(sUSDC.balanceOf(address(skyAdapter))), assets, 1 wei, "adapter sUSDC conversion"
+        );
 
         uint256 USDSBalanceAfter = usds.balanceOf(address(sUSDC));
         assertGe(USDSBalanceBefore + assets, USDSBalanceAfter, "sUSDS USDS balance");
