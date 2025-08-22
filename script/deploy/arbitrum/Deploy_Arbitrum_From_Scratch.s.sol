@@ -11,7 +11,8 @@ import "forge-std/Test.sol";
 
 /**
  * @notice Script used for the first deployment on Arbitrum
- * forge script script/deploy/arbitrum/Deploy_Arbitrum_From_Scratch.s.sol --rpc-url $ARBITRUM_RPC_URL --private-key $PRIVATE_KEY
+ * forge script script/deploy/arbitrum/Deploy_Arbitrum_From_Scratch.s.sol --rpc-url $ARBITRUM_RPC_URL --private-key
+ * $PRIVATE_KEY
  * --broadcast --etherscan-api-key $ETHERSCAN_API_KEY --verify -vv
  *
  */
