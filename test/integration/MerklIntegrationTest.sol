@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import "../BaseTest.sol";
 import {stdJson} from "../../lib/forge-std/src/StdJson.sol";
 import {console} from "../../lib/forge-std/src/console.sol";
 
@@ -15,11 +14,12 @@ import "../../src/VaultV2.sol";
 import {ERC4626AdapterFactory} from "../../src/adapters/ERC4626AdapterFactory.sol";
 import {IERC4626AdapterFactory} from "../../src/adapters/interfaces/IERC4626AdapterFactory.sol";
 import {IERC4626Adapter} from "../../src/adapters/interfaces/IERC4626Adapter.sol";
+import {Test} from "../../lib/forge-std/src/Test.sol";
 
 /// @title MerklIntegrationTest
 /// @notice Integration test for ERC4626Adapter with Merkl reward claiming functionality
 /// @dev This test uses real historical Merkl transaction data on mainnet fork
-contract MerklIntegrationTest is BaseTest {
+contract MerklIntegrationTest is Test {
     // Mainnet addresses
     address constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address constant STATA_USDC = 0xD4fa2D31b7968E448877f69A96DE69f5de8cD23E; // Stata USDC contract (used as ERC4626
@@ -28,6 +28,10 @@ contract MerklIntegrationTest is BaseTest {
     uint256 constant FORK_BLOCK = 23189636; // Block with the historical transaction
 
     // Test accounts
+    address immutable owner = makeAddr("owner");
+    address immutable curator = makeAddr("curator");
+    address immutable allocator = makeAddr("allocator");
+    address immutable sentinel = makeAddr("sentinel");
     address immutable user = makeAddr("user");
     address immutable rewardClaimer = makeAddr("rewardClaimer");
 
@@ -36,6 +40,8 @@ contract MerklIntegrationTest is BaseTest {
     bytes internal swapData = hex"";
 
     // Contracts
+    IVaultV2Factory vaultFactory;
+    IVaultV2 vault;
     IERC4626AdapterFactory adapterFactory;
     IERC4626Adapter merklAdapter;
     IERC20 usdc;
@@ -43,7 +49,7 @@ contract MerklIntegrationTest is BaseTest {
     // Fork management
     uint256 mainnetFork;
 
-    function setUp() public override {
+    function setUp() public {
         // Create mainnet fork
         string memory rpcUrl = vm.envString("MAINNET_RPC_URL");
         mainnetFork = vm.createFork(rpcUrl, FORK_BLOCK);
