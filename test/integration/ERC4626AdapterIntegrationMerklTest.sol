@@ -8,7 +8,7 @@ import "./ERC4626AdapterIntegrationTest.sol";
 /// @title MerklIntegrationTest
 /// @notice Integration test for ERC4626Adapter with Merkl reward claiming functionality
 /// @dev This test uses real historical Merkl transaction data on mainnet fork
-contract MerklIntegrationTest is ERC4626AdapterIntegrationTest {
+contract ERC4626AdapterIntegrationMerklTest is ERC4626AdapterIntegrationTest {
     uint256 internal initialDeposit = 100000e6; // 100,000 USDC
 
     // Fake swapping data

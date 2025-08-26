@@ -98,4 +98,22 @@ contract ERC4626AdapterIntegrationTest is Test {
         deal(address(usdc), address(this), MAX_TEST_ASSETS);
         usdc.approve(address(vault), type(uint256).max);
     }
+
+    function _setIsAdapter(address adapter, bool newIsAdapter) internal {
+        vm.prank(curator);
+        vault.submit(abi.encodeCall(IVaultV2.setIsAdapter, (adapter, newIsAdapter)));
+        vault.setIsAdapter(adapter, newIsAdapter);
+    }
+
+    function _setAdapterAbsoluteCap(bytes memory idData, uint256 newCap) internal {
+        vm.prank(curator);
+        vault.submit(abi.encodeCall(IVaultV2.increaseAbsoluteCap, (idData, newCap)));
+        vault.increaseAbsoluteCap(idData, newCap);
+    }
+
+    function _setAdapterRelativeCap(bytes memory idData, uint256 newCap) internal {
+        vm.prank(curator);
+        vault.submit(abi.encodeCall(IVaultV2.increaseRelativeCap, (idData, newCap)));
+        vault.increaseRelativeCap(idData, newCap);
+    }
 }
