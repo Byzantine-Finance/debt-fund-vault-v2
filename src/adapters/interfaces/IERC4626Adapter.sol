@@ -15,6 +15,7 @@ interface IERC4626Adapter is IAdapter {
     }
 
     struct ClaimParams {
+        address merklDistributor;
         MerklParams merklParams;
         address swapper;
         bytes swapData;
@@ -24,7 +25,6 @@ interface IERC4626Adapter is IAdapter {
 
     event SetSkimRecipient(address indexed newSkimRecipient);
     event SetClaimer(address indexed newClaimer);
-    event SetMerklDistributor(address indexed newMerklDistributor);
     event Skim(address indexed token, uint256 assets);
     event ClaimRewards(address[] indexed users, address[] indexed tokens, uint256[] amounts);
 
@@ -33,7 +33,6 @@ interface IERC4626Adapter is IAdapter {
     error AssetMismatch();
     error CannotSkimERC4626Shares();
     error InvalidData();
-    error MerklDistributorNotSet();
     error NotAuthorized();
 
     /* FUNCTIONS */
@@ -41,7 +40,6 @@ interface IERC4626Adapter is IAdapter {
     function factory() external view returns (address);
     function parentVault() external view returns (address);
     function erc4626Vault() external view returns (address);
-    function merklDistributor() external view returns (address);
     function adapterId() external view returns (bytes32);
     function skimRecipient() external view returns (address);
     function claimer() external view returns (address);
@@ -49,7 +47,6 @@ interface IERC4626Adapter is IAdapter {
     function ids() external view returns (bytes32[] memory);
     function setSkimRecipient(address newSkimRecipient) external;
     function setClaimer(address newClaimer) external;
-    function setMerklDistributor(address newMerklDistributor) external;
     function skim(address token) external;
     function claim(bytes calldata data) external;
 }

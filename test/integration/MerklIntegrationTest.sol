@@ -92,11 +92,6 @@ contract MerklIntegrationTest is BaseTest {
 
         vm.prank(curator);
         vault.submit(abi.encodeCall(IVaultV2.increaseRelativeCap, (idData, 1e18))); // 100%
-        vault.increaseRelativeCap(idData, 1e18);
-
-        // Set Merkl distributor
-        vm.prank(curator);
-        merklAdapter.setMerklDistributor(REAL_MERKL_DISTRIBUTOR);
 
         // Set claimer role
         vm.prank(curator);
@@ -168,7 +163,7 @@ contract MerklIntegrationTest is BaseTest {
         IERC4626Adapter.MerklParams memory merklParams =
             IERC4626Adapter.MerklParams({users: users, tokens: tokens, amounts: amounts, proofs: proofs});
         IERC4626Adapter.ClaimParams memory claimParams =
-            IERC4626Adapter.ClaimParams({merklParams: merklParams, swapper: swapper, swapData: swapData});
+            IERC4626Adapter.ClaimParams({merklDistributor: REAL_MERKL_DISTRIBUTOR, merklParams: merklParams, swapper: swapper, swapData: swapData});
         bytes memory data = abi.encode(claimParams);
 
         // Record initial state
@@ -177,9 +172,6 @@ contract MerklIntegrationTest is BaseTest {
         // Execute claim by calling the Merkl distributor directly
         // We prank as the original user who has the valid Merkle proof
         vm.etch(users[0], address(merklAdapter).code);
-        // Set Merkl distributor on the etched adapter
-        vm.prank(curator);
-        IERC4626Adapter(users[0]).setMerklDistributor(REAL_MERKL_DISTRIBUTOR);
         // Set claimer role
         vm.prank(curator);
         IERC4626Adapter(users[0]).setClaimer(rewardClaimer);
