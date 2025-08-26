@@ -6,25 +6,8 @@ import {IVaultV2} from "../interfaces/IVaultV2.sol";
 import {IERC4626} from "../interfaces/IERC4626.sol";
 import {IERC20} from "../interfaces/IERC20.sol";
 import {IERC4626Adapter} from "./interfaces/IERC4626Adapter.sol";
+import {IMerklDistributor} from "../interfaces/IMerklDistributor.sol";
 import {SafeERC20Lib} from "../libraries/SafeERC20Lib.sol";
-
-/// @notice Merkl claim parameters struct
-struct MerklParams {
-    address[] users;
-    address[] tokens;
-    uint256[] amounts;
-    bytes32[][] proofs;
-}
-
-/// @notice Interface for Merkl distributor contract
-interface IMerklDistributor {
-    function claim(
-        address[] calldata users,
-        address[] calldata tokens,
-        uint256[] calldata amounts,
-        bytes32[][] calldata proofs
-    ) external;
-}
 
 /// @dev Generic ERC4626 adapter with Merkl rewards claiming functionality
 /// @dev Designed for integration with ERC4626-compliant vaults like Stata (AAVE wrapper)

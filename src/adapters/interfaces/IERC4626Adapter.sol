@@ -5,6 +5,15 @@ pragma solidity >= 0.5.0;
 import {IAdapter} from "../../interfaces/IAdapter.sol";
 
 interface IERC4626Adapter is IAdapter {
+    /* STRUCTS */
+
+    struct MerklParams {
+        address[] users;
+        address[] tokens;
+        uint256[] amounts;
+        bytes32[][] proofs;
+    }
+
     /* EVENTS */
 
     event SetSkimRecipient(address indexed newSkimRecipient);

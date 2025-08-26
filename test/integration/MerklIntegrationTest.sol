@@ -15,17 +15,6 @@ import "../../src/VaultV2.sol";
 import {ERC4626AdapterFactory} from "../../src/adapters/ERC4626AdapterFactory.sol";
 import {IERC4626AdapterFactory} from "../../src/adapters/interfaces/IERC4626AdapterFactory.sol";
 import {IERC4626Adapter} from "../../src/adapters/interfaces/IERC4626Adapter.sol";
-import {MerklParams} from "../../src/adapters/ERC4626Adapter.sol";
-
-// Merkl Distributor interface
-interface IMerklDistributor {
-    function claim(
-        address[] calldata users,
-        address[] calldata tokens,
-        uint256[] calldata amounts,
-        bytes32[][] calldata proofs
-    ) external;
-}
 
 /// @title MerklIntegrationTest
 /// @notice Integration test for ERC4626Adapter with Merkl reward claiming functionality
@@ -171,7 +160,8 @@ contract MerklIntegrationTest is BaseTest {
         proofs[0][15] = stdJson.readBytes32(json, ".claimData.proofs[0][15]");
         proofs[0][16] = stdJson.readBytes32(json, ".claimData.proofs[0][16]");
 
-        MerklParams memory merklParams = MerklParams({users: users, tokens: tokens, amounts: amounts, proofs: proofs});
+        IERC4626Adapter.MerklParams memory merklParams =
+            IERC4626Adapter.MerklParams({users: users, tokens: tokens, amounts: amounts, proofs: proofs});
 
         // Record initial state
         uint256 initialOriginalUserBalance = IERC20(tokens[0]).balanceOf(users[0]);
