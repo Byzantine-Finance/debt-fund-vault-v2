@@ -69,18 +69,21 @@ contract ERC4626Adapter is IERC4626Adapter {
         emit Skim(token, balance);
     }
 
-    /// @dev Claims rewards from Merkl distributor contract
+    /// @dev Claims rewards from Merkl distributor contract and swap it to parent vault's asset
     /// @dev Only the claimer can call this function
-    /// @param data Encoded MerklParams struct containing users, tokens, amounts, and proofs
+    /// @param data Encoded ClaimParams struct containing merkl params, swapper address, and swap data
     function claim(bytes calldata data) external {
         require(msg.sender == claimer, NotAuthorized());
 
-        // Decode the claim data to MerklParams struct
-        MerklParams memory params = abi.decode(data, (MerklParams));
+        // Decode the claim data to ClaimParams struct
+        ClaimParams memory params = abi.decode(data, (ClaimParams));
+        MerklParams memory merklParams = params.merklParams;
 
         // Call the Merkl distributor
-        IMerklDistributor(merklDistributor).claim(params.users, params.tokens, params.amounts, params.proofs);
-        emit ClaimRewards(params.users, params.tokens, params.amounts);
+        IMerklDistributor(merklDistributor).claim(
+            merklParams.users, merklParams.tokens, merklParams.amounts, merklParams.proofs
+        );
+        emit ClaimRewards(merklParams.users, merklParams.tokens, merklParams.amounts);
     }
 
     /// @dev Does not log anything because the ids (logged in the parent vault) are enough.

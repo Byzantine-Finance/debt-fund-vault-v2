@@ -31,6 +31,10 @@ contract MerklIntegrationTest is BaseTest {
     address immutable user = makeAddr("user");
     address immutable rewardClaimer = makeAddr("rewardClaimer");
 
+    // Fake swapping data
+    address internal swapper = makeAddr("swapper");
+    bytes internal swapData = hex"";
+
     // Contracts
     IERC4626AdapterFactory adapterFactory;
     IERC4626Adapter merklAdapter;
@@ -160,8 +164,12 @@ contract MerklIntegrationTest is BaseTest {
         proofs[0][15] = stdJson.readBytes32(json, ".claimData.proofs[0][15]");
         proofs[0][16] = stdJson.readBytes32(json, ".claimData.proofs[0][16]");
 
+        // Encode claim data
         IERC4626Adapter.MerklParams memory merklParams =
             IERC4626Adapter.MerklParams({users: users, tokens: tokens, amounts: amounts, proofs: proofs});
+        IERC4626Adapter.ClaimParams memory claimParams =
+            IERC4626Adapter.ClaimParams({merklParams: merklParams, swapper: swapper, swapData: swapData});
+        bytes memory data = abi.encode(claimParams);
 
         // Record initial state
         uint256 initialOriginalUserBalance = IERC20(tokens[0]).balanceOf(users[0]);
@@ -169,7 +177,6 @@ contract MerklIntegrationTest is BaseTest {
         // Execute claim by calling the Merkl distributor directly
         // We prank as the original user who has the valid Merkle proof
         vm.etch(users[0], address(merklAdapter).code);
-        bytes memory data = abi.encode(merklParams);
         // Set Merkl distributor on the etched adapter
         vm.prank(curator);
         IERC4626Adapter(users[0]).setMerklDistributor(REAL_MERKL_DISTRIBUTOR);
