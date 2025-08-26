@@ -67,11 +67,7 @@ contract ERC4626AdapterIntegrationMerklTest is ERC4626AdapterIntegrationTest {
         vm.prank(rewardClaimer);
         IERC4626Adapter(users[0]).claim(claimData);
         uint256 finalUserBalance = IERC20(tokens[0]).balanceOf(users[0]);
-        assertEq(
-            finalUserBalance - initialUserBalance,
-            amounts[0],
-            "User should receive historical claim amount"
-        );
+        assertEq(finalUserBalance - initialUserBalance, amounts[0], "User should receive historical claim amount");
     }
 
     function _loadHistoricalMerklTransaction(string memory _path) internal {
