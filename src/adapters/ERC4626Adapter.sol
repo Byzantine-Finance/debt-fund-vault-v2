@@ -104,11 +104,29 @@ contract ERC4626Adapter is IERC4626Adapter {
         ClaimParams memory params = abi.decode(data, (ClaimParams));
         MerklParams memory merklParams = params.merklParams;
 
+        // Check the swapper contract isn't the erc4626Vault
+        require(params.swapper != erc4626Vault, SwapperCannotBeUnderlyingVault());
+
         // Call the Merkl distributor
         IMerklDistributor(params.merklDistributor).claim(
             merklParams.users, merklParams.tokens, merklParams.amounts, merklParams.proofs
         );
-        emit ClaimRewards(merklParams.users, merklParams.tokens, merklParams.amounts);
+
+        // Snapshot for sanity check
+        IERC20 parentVaultAsset = IERC20(IVaultV2(parentVault).asset());
+        uint256 parentVaultBalanceBefore = parentVaultAsset.balanceOf(parentVault);
+
+        // Swap the rewards
+        SafeERC20Lib.safeApprove(merklParams.tokens[0], params.swapper, merklParams.amounts[0]);
+        (bool success,) = params.swapper.call(params.swapData);
+        require(success, SwapReverted());
+
+        // Check if the parent vault received them
+        uint256 parentVaultBalanceAfter = parentVaultAsset.balanceOf(parentVault);
+        require(parentVaultBalanceAfter > parentVaultBalanceBefore, RewardsNotReceived());
+
+        emit ClaimRewards(merklParams.tokens[0], merklParams.amounts[0]);
+        emit SwapRewards(params.swapper, merklParams.tokens[0], merklParams.amounts[0], params.swapData);
     }
 
     /// @dev Returns adapter's ids.

@@ -26,7 +26,8 @@ interface IERC4626Adapter is IAdapter {
     event SetSkimRecipient(address indexed newSkimRecipient);
     event SetClaimer(address indexed newClaimer);
     event Skim(address indexed token, uint256 assets);
-    event ClaimRewards(address[] indexed users, address[] indexed tokens, uint256[] amounts);
+    event ClaimRewards(address indexed token, uint256 amount);
+    event SwapRewards(address indexed swapper, address indexed token, uint256 amount, bytes swapData);
 
     /* ERRORS */
 
@@ -34,6 +35,9 @@ interface IERC4626Adapter is IAdapter {
     error CannotSkimERC4626Shares();
     error InvalidData();
     error NotAuthorized();
+    error SwapperCannotBeUnderlyingVault();
+    error SwapReverted();
+    error RewardsNotReceived();
 
     /* FUNCTIONS */
 
