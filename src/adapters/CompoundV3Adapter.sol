@@ -87,16 +87,39 @@ contract CompoundV3Adapter is ICompoundV3Adapter {
     }
 
     /// @dev Claims COMP rewards accumulated by the adapter
-    function claim() external {
+    function claim(bytes calldata data) external {
         if (msg.sender != claimer) revert NotAuthorized();
 
-        address rewardToken = CometRewardsInterface(cometRewards).rewardConfig(comet).token;
+        // Decode the claim data
+        (bytes memory swapData, address swapper) = abi.decode(data, (bytes, address));
 
+        // Check the swapper contract isn't the comet contract
+        if (swapper == comet) revert SwapperCannotBeUnderlyingVault();
+
+        // Claim the rewards
+        address rewardToken = CometRewardsInterface(cometRewards).rewardConfig(comet).token;
         uint256 balanceBefore = IERC20(rewardToken).balanceOf(address(this));
         CometRewardsInterface(cometRewards).claim(comet, address(this), true);
         uint256 balanceAfter = IERC20(rewardToken).balanceOf(address(this));
+        uint256 claimedAmount = balanceAfter - balanceBefore;
 
-        emit Claim(rewardToken, balanceAfter - balanceBefore);
+        // Snapshot for sanity check
+        IERC20 parentVaultAsset = IERC20(IVaultV2(parentVault).asset());
+        uint256 parentVaultBalanceBefore = parentVaultAsset.balanceOf(parentVault);
+
+        // Swap the rewards
+        SafeERC20Lib.safeApprove(rewardToken, swapper, claimedAmount);
+        (bool success,) = swapper.call(swapData);
+        if (!success) {
+            revert SwapReverted();
+        }
+
+        // Check if the parent vault received them
+        uint256 parentVaultBalanceAfter = parentVaultAsset.balanceOf(parentVault);
+        require(parentVaultBalanceAfter > parentVaultBalanceBefore, RewardsNotReceived());
+
+        emit Claim(rewardToken, claimedAmount);
+        emit SwapRewards(swapper, rewardToken, claimedAmount, swapData);
     }
 
     /// @dev Returns adapter's ids.
