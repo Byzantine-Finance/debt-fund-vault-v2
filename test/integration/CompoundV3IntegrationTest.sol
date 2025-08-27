@@ -26,6 +26,9 @@ contract CompoundV3IntegrationTest is Test {
     IERC20 internal cbBTC = IERC20(0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf);
     IERC20 internal wstETH = IERC20(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0);
 
+    // Address of LiFi Diamond on Ethereum Mainnet
+    address constant LIFI_DIAMOND = 0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE;
+
     // Test accounts
     address immutable owner = makeAddr("owner");
     address immutable curator = makeAddr("curator");
