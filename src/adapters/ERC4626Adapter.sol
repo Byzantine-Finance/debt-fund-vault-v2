@@ -6,25 +6,8 @@ import {IVaultV2} from "../interfaces/IVaultV2.sol";
 import {IERC4626} from "../interfaces/IERC4626.sol";
 import {IERC20} from "../interfaces/IERC20.sol";
 import {IERC4626Adapter} from "./interfaces/IERC4626Adapter.sol";
+import {IMerklDistributor} from "../interfaces/IMerklDistributor.sol";
 import {SafeERC20Lib} from "../libraries/SafeERC20Lib.sol";
-
-/// @notice Merkl claim parameters struct
-struct MerklParams {
-    address[] users;
-    address[] tokens;
-    uint256[] amounts;
-    bytes32[][] proofs;
-}
-
-/// @notice Interface for Merkl distributor contract
-interface IMerklDistributor {
-    function claim(
-        address[] calldata users,
-        address[] calldata tokens,
-        uint256[] calldata amounts,
-        bytes32[][] calldata proofs
-    ) external;
-}
 
 /// @dev Generic ERC4626 adapter with Merkl rewards claiming functionality
 /// @dev Designed for integration with ERC4626-compliant vaults like Stata (AAVE wrapper)
@@ -42,7 +25,6 @@ contract ERC4626Adapter is IERC4626Adapter {
 
     address public skimRecipient;
     address public claimer;
-    address public merklDistributor;
 
     /* FUNCTIONS */
 
@@ -57,23 +39,16 @@ contract ERC4626Adapter is IERC4626Adapter {
         SafeERC20Lib.safeApprove(asset, _erc4626Vault, type(uint256).max);
     }
 
-    function setSkimRecipient(address newSkimRecipient) external {
-        require(msg.sender == IVaultV2(parentVault).owner(), NotAuthorized());
-        skimRecipient = newSkimRecipient;
-        emit SetSkimRecipient(newSkimRecipient);
-    }
-
     function setClaimer(address newClaimer) external {
         if (msg.sender != IVaultV2(parentVault).curator()) revert NotAuthorized();
-        require(merklDistributor != address(0), MerklDistributorNotSet());
         claimer = newClaimer;
         emit SetClaimer(newClaimer);
     }
 
-    function setMerklDistributor(address newMerklDistributor) external {
-        if (msg.sender != IVaultV2(parentVault).curator()) revert NotAuthorized();
-        merklDistributor = newMerklDistributor;
-        emit SetMerklDistributor(newMerklDistributor);
+    function setSkimRecipient(address newSkimRecipient) external {
+        require(msg.sender == IVaultV2(parentVault).owner(), NotAuthorized());
+        skimRecipient = newSkimRecipient;
+        emit SetSkimRecipient(newSkimRecipient);
     }
 
     /// @dev Skims the adapter's balance of `token` and sends it to `skimRecipient`.
@@ -84,20 +59,6 @@ contract ERC4626Adapter is IERC4626Adapter {
         uint256 balance = IERC20(token).balanceOf(address(this));
         SafeERC20Lib.safeTransfer(token, skimRecipient, balance);
         emit Skim(token, balance);
-    }
-
-    /// @dev Claims rewards from Merkl distributor contract
-    /// @dev Only the claimer can call this function
-    /// @param data Encoded MerklParams struct containing users, tokens, amounts, and proofs
-    function claim(bytes calldata data) external {
-        require(msg.sender == claimer, NotAuthorized());
-
-        // Decode the claim data to MerklParams struct
-        MerklParams memory params = abi.decode(data, (MerklParams));
-
-        // Call the Merkl distributor
-        IMerklDistributor(merklDistributor).claim(params.users, params.tokens, params.amounts, params.proofs);
-        emit ClaimRewards(params.users, params.tokens, params.amounts);
     }
 
     /// @dev Does not log anything because the ids (logged in the parent vault) are enough.
@@ -131,6 +92,47 @@ contract ERC4626Adapter is IERC4626Adapter {
         // Safe casts because ERC4626 vaults bound the total supply, and allocation is less than the
         // max total assets of the vault.
         return (ids(), int256(newAllocation) - int256(oldAllocation));
+    }
+
+    /// @dev Claims rewards from Merkl distributor contract and swap it to parent vault's asset
+    /// @dev Only the claimer can call this function
+    /// @param data Encoded ClaimParams struct containing merkl params and swap params
+    function claim(bytes calldata data) external {
+        require(msg.sender == claimer, NotAuthorized());
+
+        // Decode the claim data
+        ClaimParams memory claimParams = abi.decode(data, (ClaimParams));
+        MerklParams memory merklParams = claimParams.merklParams;
+        SwapParams[] memory swapParams = claimParams.swapParams;
+
+        // Claim data checks
+        require(swapParams.length == merklParams.tokens.length, InvalidData());
+
+        // Call the Merkl distributor
+        IMerklDistributor(claimParams.merklDistributor).claim(
+            merklParams.users, merklParams.tokens, merklParams.amounts, merklParams.proofs
+        );
+
+        IERC20 parentVaultAsset = IERC20(IVaultV2(parentVault).asset());
+        for (uint256 i; i < swapParams.length; ++i) {
+            // Check the swapper contract isn't the erc4626Vault
+            require(swapParams[i].swapper != erc4626Vault, SwapperCannotBeUnderlyingVault());
+
+            // Snapshot for sanity check
+            uint256 parentVaultBalanceBefore = parentVaultAsset.balanceOf(parentVault);
+
+            // Swap the rewards
+            SafeERC20Lib.safeApprove(merklParams.tokens[i], swapParams[i].swapper, merklParams.amounts[i]);
+            (bool success,) = swapParams[i].swapper.call(swapParams[i].swapData);
+            require(success, SwapReverted());
+
+            // Check if the parent vault received them
+            uint256 parentVaultBalanceAfter = parentVaultAsset.balanceOf(parentVault);
+            require(parentVaultBalanceAfter > parentVaultBalanceBefore, RewardsNotReceived());
+
+            emit ClaimRewards(merklParams.tokens[i], merklParams.amounts[i]);
+            emit SwapRewards(swapParams[i].swapper, merklParams.tokens[i], merklParams.amounts[i], swapParams[i].swapData);
+        }
     }
 
     /// @dev Returns adapter's ids.

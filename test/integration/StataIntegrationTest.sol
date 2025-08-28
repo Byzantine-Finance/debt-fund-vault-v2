@@ -143,7 +143,6 @@ contract StataIntegrationTest is BaseTest {
         // Test adapter properties
         assertEq(stataAdapter.parentVault(), address(vault));
         assertEq(stataAdapter.erc4626Vault(), STATA_USDC);
-        assertEq(stataAdapter.merklDistributor(), MERKL_DISTRIBUTOR);
 
         // Test initial state
         assertEq(stataAdapter.allocation(), 0);
