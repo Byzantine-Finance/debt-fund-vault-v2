@@ -10,19 +10,22 @@ contract CompoundV3IntegrationRewardsTest is CompoundV3IntegrationTest {
 
     // Load quote data from JSON file
     string internal root = vm.projectRoot();
-    string internal path = string.concat(root, "/test/data/quote_data_from_swapper.json");
+    string internal path = string.concat(root, "/test/data/claim_data_compound_ethereum.json");
 
     // The claim data from the quote
-    uint256 internal baseForkBlock;
+    uint256 internal testForkBlock;
     bytes internal claimData;
-    address internal vaultUsedInQuote;
+    address internal vaultAddr;
     uint256 internal minAmountOut; // only used to assert
 
     function setUp() public virtual override {
+        _loadClaimData(path);
+
         // Create a fork with a specific block number
-        _loadQuoteData(path);
-        uint256 mainnetFork = vm.createFork(rpcUrl, baseForkBlock);
-        vm.selectFork(mainnetFork);
+        rpcUrl = vm.envString("MAINNET_RPC_URL");
+        forkId = vm.createFork(rpcUrl, testForkBlock);
+        vm.selectFork(forkId);
+        skipMainnetFork = true;
 
         super.setUp();
 
@@ -43,10 +46,8 @@ contract CompoundV3IntegrationRewardsTest is CompoundV3IntegrationTest {
 
     /// forge-config: default.isolate = true
     function testClaimRewards() public {
-        _loadQuoteData(path);
-
-        // etch the vault address used in the quote
-        vm.etch(vaultUsedInQuote, address(vault).code);
+        // etch the vault address used as the swap receiver
+        vm.etch(vaultAddr, address(vault).code);
 
         // get the reward token
         address rewardToken = cometRewards.getRewardOwed(address(comet), address(compoundAdapter)).token;
@@ -57,7 +58,7 @@ contract CompoundV3IntegrationRewardsTest is CompoundV3IntegrationTest {
         uint256 owed = cometRewards.getRewardOwed(address(comet), address(compoundAdapter)).owed;
 
         // vault's USDC balance before the claim
-        uint256 vaultUSDCBalanceBefore = IERC20(usdc).balanceOf(vaultUsedInQuote);
+        uint256 vaultUSDCBalanceBefore = IERC20(usdc).balanceOf(vaultAddr);
 
         vm.startPrank(claimer);
 
@@ -68,26 +69,26 @@ contract CompoundV3IntegrationRewardsTest is CompoundV3IntegrationTest {
         vm.stopPrank();
 
         // Verify the vault's USDC balance has the minimum amount out provided in the quote
-        assertGe(IERC20(usdc).balanceOf(vaultUsedInQuote) - vaultUSDCBalanceBefore, minAmountOut);
+        assertGe(IERC20(usdc).balanceOf(vaultAddr) - vaultUSDCBalanceBefore, minAmountOut);
 
         assertEq(cometRewards.rewardsClaimed(address(comet), address(compoundAdapter)), owed);
         assertEq(IERC20(rewardToken).balanceOf(address(compoundAdapter)), 0);
         assertEq(cometRewards.getRewardOwed(address(comet), address(compoundAdapter)).owed, 0);
     }
 
-    function _loadQuoteData(string memory _path) internal {
+    function _loadClaimData(string memory _path) internal {
         string memory json = vm.readFile(_path);
 
         // Parse blockNumber
-        baseForkBlock = stdJson.readUint(json, ".blockNumber");
+        testForkBlock = stdJson.readUint(json, ".blockNumber");
 
         // Parse claimData
-        claimData = stdJson.readBytes(json, ".claimData");
+        claimData = stdJson.readBytes(json, ".claimCallData");
 
         // Parse minAmountOut
         minAmountOut = stdJson.readUint(json, ".minAmountOut");
 
-        // Parse vaultUsedInQuote
-        vaultUsedInQuote = stdJson.readAddress(json, ".vaultUsedInQuote");
+        // Parse vaultAddr
+        vaultAddr = stdJson.readAddress(json, ".vaultAddr");
     }
 }

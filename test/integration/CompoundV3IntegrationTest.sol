@@ -17,8 +17,12 @@ import {Test, console2} from "../../lib/forge-std/src/Test.sol";
 
 contract CompoundV3IntegrationTest is Test {
     uint256 constant MAX_TEST_ASSETS = 1e18;
-    uint256 constant FORK_BLOCK = 23175417;
-    string internal rpcUrl = vm.envString("MAINNET_RPC_URL");
+
+    // Fork variables
+    string internal rpcUrl;
+    uint256 internal forkId;
+    uint256 internal forkBlock = 23175417;
+    bool internal skipMainnetFork;
 
     // Addresses of Comet USDC and USDC on Ethereum Mainnet
     CometInterface internal comet = CometInterface(0xc3d688B66703497DAA19211EEdff47f25384cdc3);
@@ -26,9 +30,6 @@ contract CompoundV3IntegrationTest is Test {
     IERC20 internal usdc = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
     IERC20 internal cbBTC = IERC20(0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf);
     IERC20 internal wstETH = IERC20(0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0);
-
-    // Address of LiFi Diamond on Ethereum Mainnet
-    address constant LIFI_DIAMOND = 0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE;
 
     // Test accounts
     address immutable owner = makeAddr("owner");
@@ -49,9 +50,12 @@ contract CompoundV3IntegrationTest is Test {
     ICompoundV3Adapter internal compoundAdapter;
 
     function setUp() public virtual {
-        // Create mainnet fork
-        uint256 mainnetFork = vm.createFork(rpcUrl, FORK_BLOCK);
-        vm.selectFork(mainnetFork);
+        // Create mainnet fork (is skipping not asked)
+        if (!skipMainnetFork) {
+            rpcUrl = vm.envString("MAINNET_RPC_URL");
+            forkId = vm.createFork(rpcUrl, forkBlock);
+            vm.selectFork(forkId);
+        }
 
         vm.label(address(this), "testContract");
         vm.label(address(usdc), "usdc");
