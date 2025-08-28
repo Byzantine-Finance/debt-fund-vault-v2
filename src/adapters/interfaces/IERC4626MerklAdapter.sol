@@ -4,7 +4,7 @@ pragma solidity >= 0.5.0;
 
 import {IAdapter} from "../../interfaces/IAdapter.sol";
 
-interface IERC4626Adapter is IAdapter {
+interface IERC4626MerklAdapter is IAdapter {
     /* STRUCTS */
 
     struct MerklParams {

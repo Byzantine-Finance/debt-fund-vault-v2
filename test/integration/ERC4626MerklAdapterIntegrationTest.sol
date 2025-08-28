@@ -5,18 +5,18 @@ import {VaultV2Factory, IVaultV2Factory} from "../../src/VaultV2Factory.sol";
 import {IVaultV2, IERC4626, IERC20} from "../../src/interfaces/IVaultV2.sol";
 import "../../src/libraries/ConstantsLib.sol";
 
-import {ERC4626AdapterFactory, IERC4626AdapterFactory} from "../../src/adapters/ERC4626AdapterFactory.sol";
-import {IERC4626Adapter} from "../../src/adapters/interfaces/IERC4626Adapter.sol";
+import {ERC4626MerklAdapterFactory, IERC4626MerklAdapterFactory} from "../../src/adapters/ERC4626MerklAdapterFactory.sol";
+import {IERC4626MerklAdapter} from "../../src/adapters/interfaces/IERC4626MerklAdapter.sol";
 
 import {Test, console2} from "../../lib/forge-std/src/Test.sol";
 
-contract ERC4626AdapterIntegrationTest is Test {
+contract ERC4626MerklAdapterIntegrationTest is Test {
     uint256 constant MAX_TEST_ASSETS = 1e18;
 
     // Fork variables
     string internal rpcUrl;
     uint256 internal forkId;
-    uint256 internal forkBlock = 23189636; // Block with the historical Merkl transaction (mainnet)
+    uint256 internal forkBlock;
     bool internal skipMainnetFork;
 
     // Addresses of USDC, Stata USDC, and Merkl Distributor on Ethereum Mainnet
@@ -40,14 +40,14 @@ contract ERC4626AdapterIntegrationTest is Test {
     // Contracts
     IVaultV2Factory internal vaultFactory;
     IVaultV2 internal vault;
-    IERC4626AdapterFactory internal erc4626AdapterFactory;
-    IERC4626Adapter internal erc4626Adapter;
+    IERC4626MerklAdapterFactory internal erc4626MerklAdapterFactory;
+    IERC4626MerklAdapter internal erc4626MerklAdapter;
 
     function setUp() public virtual {
         // Create mainnet fork (is skipping not asked)
         if (!skipMainnetFork) {
             rpcUrl = vm.envString("MAINNET_RPC_URL");
-            forkId = vm.createFork(rpcUrl, forkBlock);
+            forkId = vm.createFork(rpcUrl);
             vm.selectFork(forkId);
         }
 
@@ -62,11 +62,11 @@ contract ERC4626AdapterIntegrationTest is Test {
         vm.label(address(vault), "vault");
 
         // Deploy adapter factory and create adapter
-        erc4626AdapterFactory = new ERC4626AdapterFactory();
-        erc4626Adapter = IERC4626Adapter(erc4626AdapterFactory.createERC4626Adapter(address(vault), address(stataUSDC)));
-        expectedAdapterIdData = abi.encode("this", address(erc4626Adapter));
+        erc4626MerklAdapterFactory = new ERC4626MerklAdapterFactory();
+        erc4626MerklAdapter = IERC4626MerklAdapter(erc4626MerklAdapterFactory.createERC4626MerklAdapter(address(vault), address(stataUSDC)));
+        expectedAdapterIdData = abi.encode("this", address(erc4626MerklAdapter));
         expectedAdapterId = keccak256(expectedAdapterIdData);
-        vm.label(address(erc4626Adapter), "erc4626Adapter");
+        vm.label(address(erc4626MerklAdapter), "erc4626MerklAdapter");
 
         // Set up vault roles
         vm.startPrank(owner);
@@ -81,8 +81,8 @@ contract ERC4626AdapterIntegrationTest is Test {
         vault.setIsAllocator(allocator, true);
 
         // Set up adapter in vault
-        vault.submit(abi.encodeCall(IVaultV2.setIsAdapter, (address(erc4626Adapter), true)));
-        vault.setIsAdapter(address(erc4626Adapter), true);
+        vault.submit(abi.encodeCall(IVaultV2.setIsAdapter, (address(erc4626MerklAdapter), true)));
+        vault.setIsAdapter(address(erc4626MerklAdapter), true);
 
         // Set max rate for interest accrual
         vault.submit(abi.encodeCall(IVaultV2.setMaxRate, (MAX_MAX_RATE)));
@@ -97,7 +97,7 @@ contract ERC4626AdapterIntegrationTest is Test {
         vault.increaseRelativeCap(expectedAdapterIdData, WAD);
 
         // Set claimer role
-        erc4626Adapter.setClaimer(rewardClaimer);
+        erc4626MerklAdapter.setClaimer(rewardClaimer);
 
         vm.stopPrank();
 

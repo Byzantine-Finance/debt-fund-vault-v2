@@ -10,9 +10,9 @@ import {IERC20} from "../../src/interfaces/IERC20.sol";
 
 import {VaultV2Factory} from "../../src/VaultV2Factory.sol";
 import "../../src/VaultV2.sol";
-import {ERC4626AdapterFactory} from "../../src/adapters/ERC4626AdapterFactory.sol";
-import {IERC4626AdapterFactory} from "../../src/adapters/interfaces/IERC4626AdapterFactory.sol";
-import {IERC4626Adapter} from "../../src/adapters/interfaces/IERC4626Adapter.sol";
+import {ERC4626MerklAdapterFactory} from "../../src/adapters/ERC4626MerklAdapterFactory.sol";
+import {IERC4626MerklAdapterFactory} from "../../src/adapters/interfaces/IERC4626MerklAdapterFactory.sol";
+import {IERC4626MerklAdapter} from "../../src/adapters/interfaces/IERC4626MerklAdapter.sol";
 
 // AAVE V3 Pool interface
 interface IPool {
@@ -36,8 +36,8 @@ contract StataIntegrationTest is BaseTest {
     address immutable user = makeAddr("user");
 
     // Contracts
-    IERC4626AdapterFactory adapterFactory;
-    IERC4626Adapter stataAdapter;
+    IERC4626MerklAdapterFactory adapterFactory;
+    IERC4626MerklAdapter stataAdapter;
     IERC20 usdc;
     IERC4626 stata;
     IPool aavePool;
@@ -77,8 +77,8 @@ contract StataIntegrationTest is BaseTest {
         vault.setIsAllocator(allocator, true);
 
         // Deploy adapter factory and create Stata adapter
-        adapterFactory = new ERC4626AdapterFactory();
-        stataAdapter = IERC4626Adapter(adapterFactory.createERC4626Adapter(address(vault), STATA_USDC));
+        adapterFactory = new ERC4626MerklAdapterFactory();
+        stataAdapter = IERC4626MerklAdapter(adapterFactory.createERC4626MerklAdapter(address(vault), STATA_USDC));
 
         // Set up adapter
         vm.prank(curator);
