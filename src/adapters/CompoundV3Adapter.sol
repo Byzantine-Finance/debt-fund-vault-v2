@@ -86,7 +86,9 @@ contract CompoundV3Adapter is ICompoundV3Adapter {
         return (ids(), int256(newAllocation) - int256(oldAllocation));
     }
 
-    /// @dev Claims COMP rewards accumulated by the adapter
+    /// @dev Claims COMP rewards accumulated by the adapter and swap it to parent vault's asset
+    /// @dev Only the claimer can call this function
+    /// @param data Encoded SwapParams struct containing swapper and swap data
     function claim(bytes calldata data) external {
         if (msg.sender != claimer) revert NotAuthorized();
 
@@ -94,32 +96,33 @@ contract CompoundV3Adapter is ICompoundV3Adapter {
         (address swapper, bytes memory swapData) = abi.decode(data, (address, bytes));
 
         // Check the swapper contract isn't the comet contract
-        if (swapper == comet) revert SwapperCannotBeUnderlyingVault();
+        if (swapper == comet) revert SwapperCannotBeComet();
+
+        // Get assets
+        IERC20 rewardToken = IERC20(CometRewardsInterface(cometRewards).rewardConfig(comet).token);
+        IERC20 parentVaultAsset = IERC20(IVaultV2(parentVault).asset());
 
         // Claim the rewards
-        address rewardToken = CometRewardsInterface(cometRewards).rewardConfig(comet).token;
-        uint256 balanceBefore = IERC20(rewardToken).balanceOf(address(this));
+        uint256 balanceBefore = rewardToken.balanceOf(address(this));
         CometRewardsInterface(cometRewards).claim(comet, address(this), true);
-        uint256 balanceAfter = IERC20(rewardToken).balanceOf(address(this));
+        uint256 balanceAfter = rewardToken.balanceOf(address(this));
         uint256 claimedAmount = balanceAfter - balanceBefore;
 
         // Snapshot for sanity check
-        IERC20 parentVaultAsset = IERC20(IVaultV2(parentVault).asset());
-        uint256 parentVaultBalanceBefore = parentVaultAsset.balanceOf(parentVault);
+        balanceBefore = parentVaultAsset.balanceOf(parentVault);
 
         // Swap the rewards
-        SafeERC20Lib.safeApprove(rewardToken, swapper, claimedAmount);
+        SafeERC20Lib.safeApprove(address(rewardToken), swapper, claimedAmount);
         (bool success,) = swapper.call(swapData);
-        if (!success) {
-            revert SwapReverted();
-        }
+        require(success, SwapReverted());
+        uint256 swappedAmount = balanceAfter - rewardToken.balanceOf(address(this));
 
         // Check if the parent vault received them
-        uint256 parentVaultBalanceAfter = parentVaultAsset.balanceOf(parentVault);
-        require(parentVaultBalanceAfter > parentVaultBalanceBefore, RewardsNotReceived());
+        balanceAfter = parentVaultAsset.balanceOf(parentVault);
+        require(balanceAfter > balanceBefore, RewardsNotReceived());
 
-        emit Claim(rewardToken, claimedAmount);
-        emit SwapRewards(swapper, rewardToken, claimedAmount, swapData);
+        emit Claim(address(rewardToken), claimedAmount);
+        emit SwapRewards(swapper, address(rewardToken), swappedAmount, swapData);
     }
 
     /// @dev Returns adapter's ids.
