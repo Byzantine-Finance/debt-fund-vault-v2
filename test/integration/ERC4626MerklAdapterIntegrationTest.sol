@@ -5,7 +5,9 @@ import {VaultV2Factory, IVaultV2Factory} from "../../src/VaultV2Factory.sol";
 import {IVaultV2, IERC4626, IERC20} from "../../src/interfaces/IVaultV2.sol";
 import "../../src/libraries/ConstantsLib.sol";
 
-import {ERC4626MerklAdapterFactory, IERC4626MerklAdapterFactory} from "../../src/adapters/ERC4626MerklAdapterFactory.sol";
+import {
+    ERC4626MerklAdapterFactory, IERC4626MerklAdapterFactory
+} from "../../src/adapters/ERC4626MerklAdapterFactory.sol";
 import {IERC4626MerklAdapter} from "../../src/adapters/interfaces/IERC4626MerklAdapter.sol";
 
 import {Test, console2} from "../../lib/forge-std/src/Test.sol";
@@ -63,7 +65,9 @@ contract ERC4626MerklAdapterIntegrationTest is Test {
 
         // Deploy adapter factory and create adapter
         erc4626MerklAdapterFactory = new ERC4626MerklAdapterFactory();
-        erc4626MerklAdapter = IERC4626MerklAdapter(erc4626MerklAdapterFactory.createERC4626MerklAdapter(address(vault), address(stataUSDC)));
+        erc4626MerklAdapter = IERC4626MerklAdapter(
+            erc4626MerklAdapterFactory.createERC4626MerklAdapter(address(vault), address(stataUSDC))
+        );
         expectedAdapterIdData = abi.encode("this", address(erc4626MerklAdapter));
         expectedAdapterId = keccak256(expectedAdapterIdData);
         vm.label(address(erc4626MerklAdapter), "erc4626MerklAdapter");
