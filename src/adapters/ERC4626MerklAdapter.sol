@@ -21,6 +21,11 @@ contract ERC4626MerklAdapter is IERC4626MerklAdapter {
     address public immutable erc4626Vault;
     bytes32 public immutable adapterId;
 
+    /* CONSTANTS */
+
+    /// @dev Merkl distributor address on the vast majority of chains
+    address public constant MERKL_DISTRIBUTOR = 0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae;
+
     /* STORAGE */
 
     address public skimRecipient;
@@ -109,7 +114,7 @@ contract ERC4626MerklAdapter is IERC4626MerklAdapter {
         require(swapParams.length == merklParams.tokens.length, InvalidData());
 
         // Call the Merkl distributor
-        IMerklDistributor(claimParams.merklDistributor).claim(
+        IMerklDistributor(MERKL_DISTRIBUTOR).claim(
             merklParams.users, merklParams.tokens, merklParams.amounts, merklParams.proofs
         );
 

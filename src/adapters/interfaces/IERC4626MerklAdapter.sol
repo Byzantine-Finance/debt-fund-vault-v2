@@ -20,7 +20,6 @@ interface IERC4626MerklAdapter is IAdapter {
     }
 
     struct ClaimParams {
-        address merklDistributor;
         MerklParams merklParams;
         SwapParams[] swapParams;
     }

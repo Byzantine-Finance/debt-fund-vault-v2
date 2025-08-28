@@ -9,7 +9,6 @@ contract ERC4626MerklAdapterIntegrationClaimTest is ERC4626MerklAdapterIntegrati
     // Base contracts and fork block
     IERC20 constant baseUSDC = IERC20(0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913);
     IERC4626 constant baseStataUSDC = IERC4626(0xC768c589647798a6EE01A91FdE98EF2ed046DBD6);
-    address constant baseMerklDistributor = 0x3Ef3D8bA38EBe18DB133cEc108f4D14CE00Dd9Ae;
 
     // Claiming data (bot generated)
     uint256 internal baseForkBlock;
@@ -18,7 +17,7 @@ contract ERC4626MerklAdapterIntegrationClaimTest is ERC4626MerklAdapterIntegrati
     address internal rewardToken;
     uint256 internal rewardAmount;
     address internal lifiDiamond;
-    uint256 internal usdcValueLowerBound;
+    uint256 internal usdcMinAmountReceived;
     bytes internal swapData;
     bytes internal claimData;
 
@@ -38,7 +37,6 @@ contract ERC4626MerklAdapterIntegrationClaimTest is ERC4626MerklAdapterIntegrati
         // Set base contracts
         usdc = baseUSDC;
         stataUSDC = baseStataUSDC;
-        merklDistributor = baseMerklDistributor;
 
         super.setUp();
 
@@ -67,7 +65,7 @@ contract ERC4626MerklAdapterIntegrationClaimTest is ERC4626MerklAdapterIntegrati
         uint256 vaultAssetBalanceAfter = IERC20(IVaultV2(vaultAddr).asset()).balanceOf(vaultAddr);
         uint256 rewardsInUSDC = vaultAssetBalanceAfter - vaultAssetBalanceBefore;
 
-        assertGe(rewardsInUSDC, usdcValueLowerBound);
+        assertGe(rewardsInUSDC, usdcMinAmountReceived);
     }
 
     function _loadClaimData(string memory _path) internal {
@@ -79,7 +77,7 @@ contract ERC4626MerklAdapterIntegrationClaimTest is ERC4626MerklAdapterIntegrati
         rewardToken = stdJson.readAddress(json, ".rewardToken");
         rewardAmount = stdJson.readUint(json, ".rewardAmount");
         lifiDiamond = stdJson.readAddress(json, ".lifiDiamond");
-        usdcValueLowerBound = stdJson.readUint(json, ".usdcValueLowerBound");
+        usdcMinAmountReceived = stdJson.readUint(json, ".toAmountMin");
         swapData = stdJson.readBytes(json, ".swapCalldata");
         claimData = stdJson.readBytes(json, ".claimCalldata");
 
