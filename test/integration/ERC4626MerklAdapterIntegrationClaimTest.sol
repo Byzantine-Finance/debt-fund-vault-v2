@@ -40,8 +40,9 @@ contract ERC4626MerklAdapterIntegrationClaimTest is ERC4626MerklAdapterIntegrati
 
         super.setUp();
 
-        // Deploy an apdater with parent vault being `vaultAddr` and etch code to `adapterAddr` 
-        erc4626MerklAdapter = IERC4626MerklAdapter(erc4626MerklAdapterFactory.createERC4626MerklAdapter(vaultAddr, address(stataUSDC)));
+        // Deploy an apdater with parent vault being `vaultAddr` and etch code to `adapterAddr`
+        erc4626MerklAdapter =
+            IERC4626MerklAdapter(erc4626MerklAdapterFactory.createERC4626MerklAdapter(vaultAddr, address(stataUSDC)));
         vm.etch(adapterAddr, address(erc4626MerklAdapter).code);
 
         // Set claimer role in etched adapter

@@ -136,7 +136,9 @@ contract ERC4626MerklAdapter is IERC4626MerklAdapter {
             require(parentVaultBalanceAfter > parentVaultBalanceBefore, RewardsNotReceived());
 
             emit ClaimRewards(merklParams.tokens[i], merklParams.amounts[i]);
-            emit SwapRewards(swapParams[i].swapper, merklParams.tokens[i], merklParams.amounts[i], swapParams[i].swapData);
+            emit SwapRewards(
+                swapParams[i].swapper, merklParams.tokens[i], merklParams.amounts[i], swapParams[i].swapData
+            );
         }
     }
 
