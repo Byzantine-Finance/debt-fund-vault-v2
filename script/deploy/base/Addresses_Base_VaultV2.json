@@ -1,0 +1,10 @@
+{
+  "addresses": {
+    "compoundV3Adapter": "0x34b07335E98a374df836E5745AC980E914117218",
+    "vault": "0xFEF182d98d4913bA08B7eb700D3C1f6208f4A70B"
+  },
+  "chainInfo": {
+    "chainId": 8453,
+    "deploymentBlock": 34811710
+  }
+}
