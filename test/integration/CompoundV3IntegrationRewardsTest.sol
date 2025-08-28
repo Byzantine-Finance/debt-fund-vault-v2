@@ -12,12 +12,18 @@ contract CompoundV3IntegrationRewardsTest is CompoundV3IntegrationTest {
     string internal root = vm.projectRoot();
     string internal path = string.concat(root, "/test/data/quote_data_from_swapper.json");
 
-    // The transaction data from the quote
-    bytes internal transactionData;
-    uint256 internal minAmountOut; // only used to assert
+    // The claim data from the quote
+    uint256 internal baseForkBlock;
+    bytes internal claimData;
     address internal vaultUsedInQuote;
+    uint256 internal minAmountOut; // only used to assert
 
     function setUp() public virtual override {
+        // Create a fork with a specific block number
+        _loadQuoteData(path);
+        uint256 mainnetFork = vm.createFork(rpcUrl, baseForkBlock);
+        vm.selectFork(mainnetFork);
+
         super.setUp();
 
         vault.deposit(initialDeposit, address(this));
@@ -53,15 +59,12 @@ contract CompoundV3IntegrationRewardsTest is CompoundV3IntegrationTest {
         // vault's USDC balance before the claim
         uint256 vaultUSDCBalanceBefore = IERC20(usdc).balanceOf(vaultUsedInQuote);
 
-        // encode the data to claim the rewards
-        bytes memory data = abi.encode(transactionData, LIFI_DIAMOND);
-
         vm.startPrank(claimer);
 
         vm.expectEmit();
         emit ICompoundV3Adapter.Claim(rewardToken, owed);
 
-        compoundAdapter.claim(data);
+        compoundAdapter.claim(claimData);
         vm.stopPrank();
 
         // Verify the vault's USDC balance has the minimum amount out provided in the quote
@@ -75,8 +78,11 @@ contract CompoundV3IntegrationRewardsTest is CompoundV3IntegrationTest {
     function _loadQuoteData(string memory _path) internal {
         string memory json = vm.readFile(_path);
 
-        // Parse transactionData
-        transactionData = stdJson.readBytes(json, ".transactionData");
+        // Parse blockNumber
+        baseForkBlock = stdJson.readUint(json, ".blockNumber");
+
+        // Parse claimData
+        claimData = stdJson.readBytes(json, ".claimData");
 
         // Parse minAmountOut
         minAmountOut = stdJson.readUint(json, ".minAmountOut");
