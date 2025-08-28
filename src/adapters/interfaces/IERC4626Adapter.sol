@@ -14,11 +14,15 @@ interface IERC4626Adapter is IAdapter {
         bytes32[][] proofs;
     }
 
+    struct SwapParams {
+        address swapper;
+        bytes swapData;
+    }
+
     struct ClaimParams {
         address merklDistributor;
         MerklParams merklParams;
-        address swapper;
-        bytes swapData;
+        SwapParams[] swapParams;
     }
 
     /* EVENTS */

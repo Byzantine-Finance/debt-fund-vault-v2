@@ -96,37 +96,43 @@ contract ERC4626Adapter is IERC4626Adapter {
 
     /// @dev Claims rewards from Merkl distributor contract and swap it to parent vault's asset
     /// @dev Only the claimer can call this function
-    /// @param data Encoded ClaimParams struct containing merkl params, swapper address, and swap data
+    /// @param data Encoded ClaimParams struct containing merkl params and swap params
     function claim(bytes calldata data) external {
         require(msg.sender == claimer, NotAuthorized());
 
-        // Decode the claim data to ClaimParams struct
-        ClaimParams memory params = abi.decode(data, (ClaimParams));
-        MerklParams memory merklParams = params.merklParams;
+        // Decode the claim data
+        ClaimParams memory claimParams = abi.decode(data, (ClaimParams));
+        MerklParams memory merklParams = claimParams.merklParams;
+        SwapParams[] memory swapParams = claimParams.swapParams;
 
-        // Check the swapper contract isn't the erc4626Vault
-        require(params.swapper != erc4626Vault, SwapperCannotBeUnderlyingVault());
+        // Claim data checks
+        require(swapParams.length == merklParams.tokens.length, InvalidData());
 
         // Call the Merkl distributor
-        IMerklDistributor(params.merklDistributor).claim(
+        IMerklDistributor(claimParams.merklDistributor).claim(
             merklParams.users, merklParams.tokens, merklParams.amounts, merklParams.proofs
         );
 
-        // Snapshot for sanity check
         IERC20 parentVaultAsset = IERC20(IVaultV2(parentVault).asset());
-        uint256 parentVaultBalanceBefore = parentVaultAsset.balanceOf(parentVault);
+        for (uint256 i; i < swapParams.length; ++i) {
+            // Check the swapper contract isn't the erc4626Vault
+            require(swapParams[i].swapper != erc4626Vault, SwapperCannotBeUnderlyingVault());
 
-        // Swap the rewards
-        SafeERC20Lib.safeApprove(merklParams.tokens[0], params.swapper, merklParams.amounts[0]);
-        (bool success,) = params.swapper.call(params.swapData);
-        require(success, SwapReverted());
+            // Snapshot for sanity check
+            uint256 parentVaultBalanceBefore = parentVaultAsset.balanceOf(parentVault);
 
-        // Check if the parent vault received them
-        uint256 parentVaultBalanceAfter = parentVaultAsset.balanceOf(parentVault);
-        require(parentVaultBalanceAfter > parentVaultBalanceBefore, RewardsNotReceived());
+            // Swap the rewards
+            SafeERC20Lib.safeApprove(merklParams.tokens[i], swapParams[i].swapper, merklParams.amounts[i]);
+            (bool success,) = swapParams[i].swapper.call(swapParams[i].swapData);
+            require(success, SwapReverted());
 
-        emit ClaimRewards(merklParams.tokens[0], merklParams.amounts[0]);
-        emit SwapRewards(params.swapper, merklParams.tokens[0], merklParams.amounts[0], params.swapData);
+            // Check if the parent vault received them
+            uint256 parentVaultBalanceAfter = parentVaultAsset.balanceOf(parentVault);
+            require(parentVaultBalanceAfter > parentVaultBalanceBefore, RewardsNotReceived());
+
+            emit ClaimRewards(merklParams.tokens[i], merklParams.amounts[i]);
+            emit SwapRewards(swapParams[i].swapper, merklParams.tokens[i], merklParams.amounts[i], swapParams[i].swapData);
+        }
     }
 
     /// @dev Returns adapter's ids.
