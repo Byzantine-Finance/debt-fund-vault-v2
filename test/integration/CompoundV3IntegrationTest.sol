@@ -18,6 +18,7 @@ import {Test, console2} from "../../lib/forge-std/src/Test.sol";
 contract CompoundV3IntegrationTest is Test {
     uint256 constant MAX_TEST_ASSETS = 1e18;
     uint256 constant FORK_BLOCK = 23175417;
+    string internal rpcUrl = vm.envString("MAINNET_RPC_URL");
 
     // Addresses of Comet USDC and USDC on Ethereum Mainnet
     CometInterface internal comet = CometInterface(0xc3d688B66703497DAA19211EEdff47f25384cdc3);
@@ -49,7 +50,6 @@ contract CompoundV3IntegrationTest is Test {
 
     function setUp() public virtual {
         // Create mainnet fork
-        string memory rpcUrl = vm.envString("MAINNET_RPC_URL");
         uint256 mainnetFork = vm.createFork(rpcUrl, FORK_BLOCK);
         vm.selectFork(mainnetFork);
 

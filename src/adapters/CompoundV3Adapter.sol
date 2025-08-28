@@ -90,8 +90,8 @@ contract CompoundV3Adapter is ICompoundV3Adapter {
     function claim(bytes calldata data) external {
         if (msg.sender != claimer) revert NotAuthorized();
 
-        // Decode the claim data
-        (bytes memory swapData, address swapper) = abi.decode(data, (bytes, address));
+        // Decode the data
+        (address swapper, bytes memory swapData) = abi.decode(data, (address, bytes));
 
         // Check the swapper contract isn't the comet contract
         if (swapper == comet) revert SwapperCannotBeUnderlyingVault();
