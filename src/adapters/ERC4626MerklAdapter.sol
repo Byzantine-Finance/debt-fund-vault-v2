@@ -5,7 +5,7 @@ pragma solidity 0.8.28;
 import {IVaultV2} from "../interfaces/IVaultV2.sol";
 import {IERC4626} from "../interfaces/IERC4626.sol";
 import {IERC20} from "../interfaces/IERC20.sol";
-import {IERC4626Adapter} from "./interfaces/IERC4626Adapter.sol";
+import {IERC4626MerklAdapter} from "./interfaces/IERC4626MerklAdapter.sol";
 import {IMerklDistributor} from "../interfaces/IMerklDistributor.sol";
 import {SafeERC20Lib} from "../libraries/SafeERC20Lib.sol";
 
@@ -13,7 +13,7 @@ import {SafeERC20Lib} from "../libraries/SafeERC20Lib.sol";
 /// @dev Designed for integration with ERC4626-compliant vaults like Stata (AAVE wrapper)
 /// @dev This adapter must be used with ERC4626 vaults that are protected against inflation attacks
 /// @dev Must not be used with an ERC4626 vault which can re-enter the parent vault
-contract ERC4626Adapter is IERC4626Adapter {
+contract ERC4626MerklAdapter is IERC4626MerklAdapter {
     /* IMMUTABLES */
 
     address public immutable factory;
