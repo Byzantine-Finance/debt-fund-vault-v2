@@ -82,8 +82,8 @@ contract StataIntegrationTest is BaseTest {
 
         // Set up adapter
         vm.prank(curator);
-        vault.submit(abi.encodeCall(IVaultV2.setIsAdapter, (address(stataAdapter), true)));
-        vault.setIsAdapter(address(stataAdapter), true);
+        vault.submit(abi.encodeCall(IVaultV2.addAdapter, address(stataAdapter)));
+        vault.addAdapter(address(stataAdapter));
 
         // Set max rate for interest accrual
         vm.prank(curator);

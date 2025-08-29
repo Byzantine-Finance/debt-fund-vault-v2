@@ -86,8 +86,8 @@ contract CompoundV3IntegrationTest is Test {
         vault.submit(abi.encodeCall(IVaultV2.setIsAllocator, (allocator, true)));
         vault.setIsAllocator(allocator, true);
 
-        vault.submit(abi.encodeCall(IVaultV2.setIsAdapter, (address(compoundAdapter), true)));
-        vault.setIsAdapter(address(compoundAdapter), true);
+        vault.submit(abi.encodeCall(IVaultV2.addAdapter, address(compoundAdapter)));
+        vault.addAdapter(address(compoundAdapter));
 
         vault.submit(abi.encodeCall(IVaultV2.setMaxRate, (MAX_MAX_RATE)));
         vault.setMaxRate(MAX_MAX_RATE);

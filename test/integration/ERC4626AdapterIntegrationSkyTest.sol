@@ -40,8 +40,8 @@ contract ERC4626AdapterIntegrationSkyTest is MorphoVaultV1_1IntegrationTest {
         vm.label(address(skyAdapter), "skyAdapter");
 
         vm.prank(curator);
-        vault.submit(abi.encodeCall(IVaultV2.setIsAdapter, (address(skyAdapter), true)));
-        vault.setIsAdapter(address(skyAdapter), true);
+        vault.submit(abi.encodeCall(IVaultV2.addAdapter, address(skyAdapter)));
+        vault.addAdapter(address(skyAdapter));
         increaseAbsoluteCap(expectedSkyAdapterIdData, type(uint128).max);
         increaseRelativeCap(expectedSkyAdapterIdData, WAD);
 

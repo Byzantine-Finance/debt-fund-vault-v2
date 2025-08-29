@@ -85,8 +85,8 @@ contract ERC4626MerklAdapterIntegrationTest is Test {
         vault.setIsAllocator(allocator, true);
 
         // Set up adapter in vault
-        vault.submit(abi.encodeCall(IVaultV2.setIsAdapter, (address(erc4626MerklAdapter), true)));
-        vault.setIsAdapter(address(erc4626MerklAdapter), true);
+        vault.submit(abi.encodeCall(IVaultV2.addAdapter, address(erc4626MerklAdapter)));
+        vault.addAdapter(address(erc4626MerklAdapter));
 
         // Set max rate for interest accrual
         vault.submit(abi.encodeCall(IVaultV2.setMaxRate, (MAX_MAX_RATE)));
@@ -110,10 +110,10 @@ contract ERC4626MerklAdapterIntegrationTest is Test {
         usdc.approve(address(vault), type(uint256).max);
     }
 
-    function _setIsAdapter(address adapter, bool newIsAdapter) internal {
+    function _addAdapter(address adapter) internal {
         vm.prank(curator);
-        vault.submit(abi.encodeCall(IVaultV2.setIsAdapter, (adapter, newIsAdapter)));
-        vault.setIsAdapter(adapter, newIsAdapter);
+        vault.submit(abi.encodeCall(IVaultV2.addAdapter, adapter));
+        vault.addAdapter(adapter);
     }
 
     function _setAdapterAbsoluteCap(bytes memory idData, uint256 newCap) internal {
