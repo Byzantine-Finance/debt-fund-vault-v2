@@ -86,8 +86,7 @@ contract StataIntegrationTest is BaseTest {
         vault.addAdapter(address(stataAdapter));
 
         // Set max rate for interest accrual
-        vm.prank(curator);
-        vault.submit(abi.encodeCall(IVaultV2.setMaxRate, (MAX_MAX_RATE)));
+        vm.prank(allocator);
         vault.setMaxRate(MAX_MAX_RATE);
 
         // Set up caps for the adapter manually (since we have our own vault)

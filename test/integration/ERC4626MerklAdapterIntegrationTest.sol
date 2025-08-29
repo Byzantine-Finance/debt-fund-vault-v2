@@ -88,10 +88,6 @@ contract ERC4626MerklAdapterIntegrationTest is Test {
         vault.submit(abi.encodeCall(IVaultV2.addAdapter, address(erc4626MerklAdapter)));
         vault.addAdapter(address(erc4626MerklAdapter));
 
-        // Set max rate for interest accrual
-        vault.submit(abi.encodeCall(IVaultV2.setMaxRate, (MAX_MAX_RATE)));
-        vault.setMaxRate(MAX_MAX_RATE);
-
         // Set up absolute cap for the adapter
         vault.submit(abi.encodeCall(IVaultV2.increaseAbsoluteCap, (expectedAdapterIdData, type(uint128).max)));
         vault.increaseAbsoluteCap(expectedAdapterIdData, type(uint128).max);
@@ -104,6 +100,10 @@ contract ERC4626MerklAdapterIntegrationTest is Test {
         erc4626MerklAdapter.setClaimer(rewardClaimer);
 
         vm.stopPrank();
+
+        // Set max rate for interest accrual
+        vm.prank(allocator);
+        vault.setMaxRate(MAX_MAX_RATE);
 
         // Fund user with USDC for testing
         deal(address(usdc), address(this), MAX_TEST_ASSETS);

@@ -89,9 +89,6 @@ contract CompoundV3IntegrationTest is Test {
         vault.submit(abi.encodeCall(IVaultV2.addAdapter, address(compoundAdapter)));
         vault.addAdapter(address(compoundAdapter));
 
-        vault.submit(abi.encodeCall(IVaultV2.setMaxRate, (MAX_MAX_RATE)));
-        vault.setMaxRate(MAX_MAX_RATE);
-
         vault.submit(abi.encodeCall(IVaultV2.increaseAbsoluteCap, (expectedAdapterIdData, type(uint128).max)));
         vault.increaseAbsoluteCap(expectedAdapterIdData, type(uint128).max);
 
@@ -99,6 +96,10 @@ contract CompoundV3IntegrationTest is Test {
         vault.increaseRelativeCap(expectedAdapterIdData, WAD);
 
         vm.stopPrank();
+
+        // Set max rate for interest accrual
+        vm.prank(allocator);
+        vault.setMaxRate(MAX_MAX_RATE);
 
         // Fund user with USDC for testing
         deal(address(usdc), address(this), MAX_TEST_ASSETS);

@@ -103,11 +103,11 @@ contract ERC4626AdapterIntegrationSkyTest is MorphoVaultV1_1IntegrationTest {
         usdcVault.submit(abi.encodeCall(IVaultV2.setIsAllocator, (allocator, true)));
         usdcVault.setIsAllocator(allocator, true);
 
-        // Set max rate for interest accrual
-        usdcVault.submit(abi.encodeCall(IVaultV2.setMaxRate, (MAX_MAX_RATE)));
-        usdcVault.setMaxRate(MAX_MAX_RATE);
-
         vm.stopPrank();
+
+        // Set max rate for interest accrual
+        vm.prank(allocator);
+        usdcVault.setMaxRate(MAX_MAX_RATE);
 
         return usdcVault;
     }
