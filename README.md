@@ -1,12 +1,19 @@
-# Vault v2
+# Debt Fund Vault V2
 
-Morpho Vault v2 enables anyone to create [non-custodial](#non-custodial-guarantees) vaults that allocate assets to any protocols, including but not limited to Morpho Market v1, Morpho Market v2, and Morpho Vault v1.
+**Debt Fund Vault V2** is a fork of [Morpho Vault v2](https://github.com/morpho-org/vault-v2) that extends the original protocol with two powerful new adapters:
+
+- **Compound V3 Adapter** - Direct integration with Compound V3
+- **ERC4626 Merkl Adapter** - Support for any ERC4626-compliant protocol with Merkl rewards
+
+This enables more flexible asset allocation strategies while maintaining the core benefits of Morpho Vault v2: depositors earn from underlying protocols without actively managing risk positions, while robust role-based systems handle asset allocation and risk management.
+
+Debt Fund Vault V2 enables anyone to create [non-custodial](#non-custodial-guarantees) vaults that allocate assets to any protocols, including but not limited to Morpho Market v1, Morpho Market v2, Morpho Vault v1, Compound V3 and any other ERC4626-compatible protocols.
 Depositors of Morpho Vault v2 earn from the underlying protocols without having to actively manage the risk of their position.
 Management of deposited assets is the responsibility of a set of different roles (owner, curator and allocators).
 The active management of invested positions involves enabling and allocating liquidity to protocols.
 
-[Morpho Vault v2](./src/VaultV2.sol) is [ERC-4626](https://eips.ethereum.org/EIPS/eip-4626) and [ERC-2612](https://eips.ethereum.org/EIPS/eip-2612) compliant.
-The [VaultV2Factory](./src/VaultV2Factory.sol) deploys instances of Vaults v2.
+[Debt Fund Vault V2](./src/VaultV2.sol) is [ERC-4626](https://eips.ethereum.org/EIPS/eip-4626) and [ERC-2612](https://eips.ethereum.org/EIPS/eip-2612) compliant.
+The [VaultV2Factory](./src/VaultV2Factory.sol) deploys instances of Debt Fund Vault V2.
 All the contracts are immutable.
 
 ## Overview
@@ -16,19 +23,22 @@ All the contracts are immutable.
 Vaults can allocate assets to arbitrary protocols and markets via adapters, or use an adapter registry to add restrictions to allowed adapters.
 The curator enables adapters to hold positions on behalf of the vault.
 Adapters are also used to know how much these investments are worth (interest and loss realization).
-Because adapters hold positions in protocols where assets are allocated, they are susceptible to accrue rewards for those protocols.
-To ensure that those rewards can be retrieved, each adapter has a skim function that can be called by the vault's owner.
+Because adapters hold positions in protocols where assets are allocated, they are susceptible to accrue [Rewards](#Rewards) for those protocols. 
 
 Adapters for the following protocols are currently available:
 
 - [Morpho Market v1](./src/adapters/MorphoMarketV1Adapter.sol).
   This adapter allocates to any Morpho Market v1, constrained by the allocation caps (see [Id system](#id-system) below).
-  The adapter holds a position on each respective market, on behalf of the vault v2.
+  The adapter holds a position on each respective market, on behalf of the debt fund vault v2.
 - [Morpho Vault v1](./src/adapters/MorphoVaultV1Adapter.sol).
   This adapter allocates to a fixed Morpho Vault v1 (v1.0 and v1.1).
-  The adapter holds shares of the corresponding Morpho Vault v1 (v1.0 and v1.1) on behalf of the vault v2.
-
-A Morpho Market v2 adapter will be released together with Market v2.
+  The adapter holds shares of the corresponding Morpho Vault v1 (v1.0 and v1.1) on behalf of the debt fund vault v2.
+- [Compound v3](src/adapters/CompoundV3Adapter.sol).
+  This adapter allocates to a fixed Compound v3 vault.
+  The adapter holds shares of the corresponding Compound v3 vault on behalf of the debt fund vault v2.
+- [ERC4626 Merkl](src/adapters/ERC4626MerklAdapter.sol).
+  This adapter allocates to any fixed underlying protocol that is ERC4624 compliant, such as Stata, Sky protocol, Euler and many ohters. This adapter can also used to allocate assets to AAVE via a Stata vault which is AAVE ERC4626 wrapper.
+  The adapter holds shares of the corresponding protocol on behalf of the debt fund vault v2.
 
 ### Id system
 
@@ -178,6 +188,29 @@ It can:
 - Decrease absolute caps.
 - Decrease relative caps.
 - Revoke timelocked actions.
+
+### Rewards management
+
+In Debt Fund Vault V2, all adapters automatically claim and process rewards for the vault's benefit.
+
+### Claiming rewards
+
+To ensure that those rewards can be retrieved, the Compound V3 and ERC4626 Merkl adapters have a claim function that can be called by the autorized claimers. All claimed rewards are instantly swapped to USDC, and transfer them to the vault for consistent value accrual. 
+
+While both adapters share the same claim function interface, their underlying reward claiming mechanisms differ:
+
+- Compound V3 Adapter uses onchain rewards distribution as rewards are accrued every second.
+- ERC4626 Merkl Adapter allows claiming rewards via Merkl protocol using merkle proofs. The claimer needs to generate merkle proofs on Merkl to be able to claim rewards.
+
+### Swap to USDC
+
+Debt Fund Vault V2 uses [LI.FI](https://li.fi/) to automatically swap all claimed rewards to USDC, routing through the DEX that offers the best quote at execution time.
+
+The offchain claimer is an automated program that runs daily and performs the following tasks:
+
+1. **Scan all vault adapters** - Check available rewards for claiming across all connected adapters
+2. **Generate optimal quotes** - Request LI.FI quotes and prepare claim data for execution
+3. **Execute claims** - Call the claim function on each adapter to swap rewards to USDC and transfer them to the vault
 
 ## Getting started
 
