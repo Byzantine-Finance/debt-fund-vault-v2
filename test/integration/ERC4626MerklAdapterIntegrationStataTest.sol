@@ -3,18 +3,7 @@
 // The implementation of this contract was inspired by Morpho Vault V2, developed by the Morpho Association in 2025.
 pragma solidity ^0.8.0;
 
-import "../BaseTest.sol";
-
-import {IVaultV2Factory} from "../../src/interfaces/IVaultV2Factory.sol";
-import {IVaultV2} from "../../src/interfaces/IVaultV2.sol";
-import {IERC4626} from "../../src/interfaces/IERC4626.sol";
-import {IERC20} from "../../src/interfaces/IERC20.sol";
-
-import {VaultV2Factory} from "../../src/VaultV2Factory.sol";
-import "../../src/VaultV2.sol";
-import {ERC4626MerklAdapterFactory} from "../../src/adapters/ERC4626MerklAdapterFactory.sol";
-import {IERC4626MerklAdapterFactory} from "../../src/adapters/interfaces/IERC4626MerklAdapterFactory.sol";
-import {IERC4626MerklAdapter} from "../../src/adapters/interfaces/IERC4626MerklAdapter.sol";
+import "./ERC4626MerklAdapterIntegrationTest.sol";
 
 // AAVE V3 Pool interface
 interface IPool {
@@ -26,61 +15,41 @@ interface IPool {
 /// @title StataIntegrationTest
 /// @notice Integration test for VaultV2 with Stata (AAVE ERC4626 wrapper) as liquidity adapter
 /// @dev This test uses a mainnet fork at block 23027397 with USDC as the underlying asset
-contract StataIntegrationTest is BaseTest {
-    // Mainnet addresses
-    address constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-    address constant STATA_USDC = 0xD4fa2D31b7968E448877f69A96DE69f5de8cD23E; // Stata USDC contract
+contract StataIntegrationTest is ERC4626MerklAdapterIntegrationTest {
+    // Constants
     address constant AAVE_POOL = 0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2; // AAVE V3 Pool
-    address constant MERKL_DISTRIBUTOR = address(0); // No Merkl distributor for this test
     uint256 constant FORK_BLOCK = 23027397;
 
     // Test accounts
     address immutable user = makeAddr("user");
 
     // Contracts
-    IERC4626MerklAdapterFactory adapterFactory;
     IERC4626MerklAdapter stataAdapter;
-    IERC20 usdc;
-    IERC4626 stata;
     IPool aavePool;
-
-    // Fork management
-    uint256 mainnetFork;
 
     function setUp() public override {
         // Create mainnet fork
-        string memory rpcUrl = vm.envString("MAINNET_RPC_URL");
-        mainnetFork = vm.createFork(rpcUrl, FORK_BLOCK);
-        vm.selectFork(mainnetFork);
+        rpcUrl = vm.envString("MAINNET_RPC_URL");
+        forkId = vm.createFork(rpcUrl, FORK_BLOCK);
+        vm.selectFork(forkId);
+        skipMainnetFork = true;
 
         // Initialize token contracts
-        usdc = IERC20(USDC);
-        stata = IERC4626(STATA_USDC);
         aavePool = IPool(AAVE_POOL);
 
         // Verify Stata is ERC4626 compliant and uses USDC as asset
-        require(stata.asset() == USDC, "Stata asset mismatch");
+        require(stataUSDC.asset() == address(usdc), "Stata asset mismatch");
 
-        // Create a new vault for USDC (BaseTest creates one for its mock token)
-        vaultFactory = IVaultV2Factory(address(new VaultV2Factory()));
-        vault = IVaultV2(vaultFactory.createVaultV2(owner, USDC, bytes32(0)));
+        super.setUp();
 
-        // Set up vault roles
+        // Set up vault names and symbols
         vm.startPrank(owner);
-        vault.setCurator(curator);
-        vault.setIsSentinel(sentinel, true);
         vault.setName("USDC Stata Vault");
         vault.setSymbol("vUSDC-STATA");
         vm.stopPrank();
 
-        // Set up allocator
-        vm.prank(curator);
-        vault.submit(abi.encodeCall(IVaultV2.setIsAllocator, (allocator, true)));
-        vault.setIsAllocator(allocator, true);
-
-        // Deploy adapter factory and create Stata adapter
-        adapterFactory = new ERC4626MerklAdapterFactory();
-        stataAdapter = IERC4626MerklAdapter(adapterFactory.createERC4626MerklAdapter(address(vault), STATA_USDC));
+        // Create Stata adapter
+        stataAdapter = erc4626MerklAdapter;
 
         // Set up adapter
         vm.prank(curator);
@@ -107,15 +76,13 @@ contract StataIntegrationTest is BaseTest {
         vault.setLiquidityAdapterAndData(address(stataAdapter), "");
 
         // Fund user with USDC for testing
-        deal(USDC, user, 1000000e6); // 1M USDC
+        deal(address(usdc), user, 1000000e6); // 1M USDC
 
         // User approves vault
         vm.prank(user);
         usdc.approve(address(vault), type(uint256).max);
 
         // Label contracts for easier debugging
-        vm.label(USDC, "USDC");
-        vm.label(STATA_USDC, "Stata USDC");
         vm.label(AAVE_POOL, "AAVE Pool");
         vm.label(address(vault), "VaultV2");
         vm.label(address(stataAdapter), "StataAdapter");
@@ -124,7 +91,7 @@ contract StataIntegrationTest is BaseTest {
 
     function testVaultDeployment() public view {
         // Test basic vault properties
-        assertEq(vault.asset(), USDC);
+        assertEq(vault.asset(), address(usdc));
         assertEq(vault.owner(), owner);
         assertEq(vault.curator(), curator);
         assertEq(vault.name(), "USDC Stata Vault");
@@ -143,7 +110,7 @@ contract StataIntegrationTest is BaseTest {
     function testStataAdapterProperties() public view {
         // Test adapter properties
         assertEq(stataAdapter.parentVault(), address(vault));
-        assertEq(stataAdapter.erc4626Vault(), STATA_USDC);
+        assertEq(stataAdapter.erc4626Vault(), address(stataUSDC));
 
         // Test initial state
         assertEq(stataAdapter.allocation(), 0);
@@ -168,7 +135,7 @@ contract StataIntegrationTest is BaseTest {
 
         // Check that funds were allocated to Stata
         assertGt(stataAdapter.allocation(), 0, "No allocation to Stata");
-        assertGt(stata.balanceOf(address(stataAdapter)), 0, "No Stata shares");
+        assertGt(stataUSDC.balanceOf(address(stataAdapter)), 0, "No Stata shares");
 
         // Test mint
         uint256 mintShares = shares / 2;
@@ -222,7 +189,7 @@ contract StataIntegrationTest is BaseTest {
 
         // Manual allocation test
         uint256 additionalAmount = 5000e6;
-        deal(USDC, address(vault), additionalAmount);
+        deal(address(usdc), address(vault), additionalAmount);
 
         vm.prank(allocator);
         vault.allocate(address(stataAdapter), "", additionalAmount);
@@ -290,19 +257,19 @@ contract StataIntegrationTest is BaseTest {
         uint256 depositAmount = 50000e6; // 50,000 USDC
 
         // Record initial Stata state
-        uint256 initialStataShares = stata.balanceOf(address(stataAdapter));
+        uint256 initialStataShares = stataUSDC.balanceOf(address(stataAdapter));
 
         // Deposit to vault
         vm.prank(user);
         vault.deposit(depositAmount, user);
 
         // Check Stata integration
-        uint256 finalStataShares = stata.balanceOf(address(stataAdapter));
+        uint256 finalStataShares = stataUSDC.balanceOf(address(stataAdapter));
         assertGt(finalStataShares, initialStataShares, "No Stata shares acquired");
 
         // Check that adapter reports correct real assets
         uint256 reportedAssets = stataAdapter.realAssets();
-        uint256 expectedAssets = stata.previewRedeem(finalStataShares);
+        uint256 expectedAssets = stataUSDC.previewRedeem(finalStataShares);
         assertApproxEqAbs(reportedAssets, expectedAssets, 1, "Real assets mismatch");
 
         // Test that we can withdraw from Stata
@@ -310,7 +277,7 @@ contract StataIntegrationTest is BaseTest {
         vault.withdraw(depositAmount / 2, user, user);
 
         // Stata shares should have decreased
-        assertLt(stata.balanceOf(address(stataAdapter)), finalStataShares, "Stata shares didn't decrease");
+        assertLt(stataUSDC.balanceOf(address(stataAdapter)), finalStataShares, "Stata shares didn't decrease");
     }
 
     /// forge-config: default.isolate = true
@@ -322,8 +289,8 @@ contract StataIntegrationTest is BaseTest {
         vault.deposit(depositAmount, user);
 
         // Record initial state
-        uint256 initialStataShares = stata.balanceOf(address(stataAdapter));
-        uint256 initialStataAssets = stata.previewRedeem(initialStataShares);
+        uint256 initialStataShares = stataUSDC.balanceOf(address(stataAdapter));
+        uint256 initialStataAssets = stataUSDC.previewRedeem(initialStataShares);
         uint256 initialVaultAssets = vault.totalAssets();
 
         // Verify initial setup
@@ -334,11 +301,11 @@ contract StataIntegrationTest is BaseTest {
         // Step 2: Generate AAVE yield by increasing utilization
         uint256 yieldGeneratingDeposit = 10000000e6; // 10M USDC to generate meaningful yield
         address yieldGenerator = makeAddr("yieldGenerator");
-        deal(USDC, yieldGenerator, yieldGeneratingDeposit);
+        deal(address(usdc), yieldGenerator, yieldGeneratingDeposit);
 
         vm.startPrank(yieldGenerator);
         usdc.approve(AAVE_POOL, yieldGeneratingDeposit);
-        aavePool.supply(USDC, yieldGeneratingDeposit, yieldGenerator, 0);
+        aavePool.supply(address(usdc), yieldGeneratingDeposit, yieldGenerator, 0);
         vm.stopPrank();
 
         // Step 3: Fast forward time to allow yield accrual
@@ -346,7 +313,7 @@ contract StataIntegrationTest is BaseTest {
         skip(timeAdvance);
 
         // Step 4: Verify Stata captured AAVE yield
-        uint256 stataAssetsAfterYield = stata.previewRedeem(initialStataShares);
+        uint256 stataAssetsAfterYield = stataUSDC.previewRedeem(initialStataShares);
         uint256 stataYieldGenerated = stataAssetsAfterYield - initialStataAssets;
 
         assertGe(stataAssetsAfterYield, initialStataAssets, "Stata assets should not decrease");
@@ -386,25 +353,25 @@ contract StataIntegrationTest is BaseTest {
         vm.prank(user);
         vault.deposit(depositAmount, user);
 
-        uint256 initialStataShares = stata.balanceOf(address(stataAdapter));
-        uint256 initialStataAssets = stata.previewRedeem(initialStataShares);
+        uint256 initialStataShares = stataUSDC.balanceOf(address(stataAdapter));
+        uint256 initialStataAssets = stataUSDC.previewRedeem(initialStataShares);
         uint256 initialVaultAssets = vault.totalAssets();
 
         // Generate AAVE yield by increasing utilization
         uint256 yieldGeneratingDeposit = 10000000e6; // 10M USDC
         address yieldGenerator = makeAddr("yieldGenerator");
-        deal(USDC, yieldGenerator, yieldGeneratingDeposit);
+        deal(address(usdc), yieldGenerator, yieldGeneratingDeposit);
 
         vm.startPrank(yieldGenerator);
         usdc.approve(AAVE_POOL, yieldGeneratingDeposit);
-        aavePool.supply(USDC, yieldGeneratingDeposit, yieldGenerator, 0);
+        aavePool.supply(address(usdc), yieldGeneratingDeposit, yieldGenerator, 0);
         vm.stopPrank();
 
         // Fast forward time to accrue interest
         skip(7 days);
 
         // Check Stata yield generation
-        uint256 stataAssetsAfterYield = stata.previewRedeem(initialStataShares);
+        uint256 stataAssetsAfterYield = stataUSDC.previewRedeem(initialStataShares);
         uint256 stataYieldGenerated = stataAssetsAfterYield - initialStataAssets;
 
         // Check vault yield capture
@@ -432,7 +399,7 @@ contract StataIntegrationTest is BaseTest {
         uint256 largeAmount = 50000000e6; // 500,000 USDC
 
         // Fund user with large amount
-        deal(USDC, user, largeAmount);
+        deal(address(usdc), user, largeAmount);
 
         // Large deposit
         vm.prank(user);
