@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (c) 2025 [Byzantine Finance]
 pragma solidity >=0.5.0;
 
 struct AssetInfo {
