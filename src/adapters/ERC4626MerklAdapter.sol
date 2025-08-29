@@ -125,20 +125,20 @@ contract ERC4626MerklAdapter is IERC4626MerklAdapter {
 
             // Snapshot for sanity check
             uint256 parentVaultBalanceBefore = parentVaultAsset.balanceOf(parentVault);
+            uint256 rewardTokenBalanceBefore = IERC20(merklParams.tokens[i]).balanceOf(address(this));
 
             // Swap the rewards
             SafeERC20Lib.safeApprove(merklParams.tokens[i], swapParams[i].swapper, merklParams.amounts[i]);
             (bool success,) = swapParams[i].swapper.call(swapParams[i].swapData);
             require(success, SwapReverted());
+            uint256 swappedAmount = rewardTokenBalanceBefore - IERC20(merklParams.tokens[i]).balanceOf(address(this));
 
             // Check if the parent vault received them
             uint256 parentVaultBalanceAfter = parentVaultAsset.balanceOf(parentVault);
             require(parentVaultBalanceAfter > parentVaultBalanceBefore, RewardsNotReceived());
 
             emit ClaimRewards(merklParams.tokens[i], merklParams.amounts[i]);
-            emit SwapRewards(
-                swapParams[i].swapper, merklParams.tokens[i], merklParams.amounts[i], swapParams[i].swapData
-            );
+            emit SwapRewards(swapParams[i].swapper, merklParams.tokens[i], swappedAmount, swapParams[i].swapData);
         }
     }
 

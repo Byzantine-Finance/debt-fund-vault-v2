@@ -51,13 +51,13 @@ contract ERC4626MerklAdapterIntegrationClaimTest is ERC4626MerklAdapterIntegrati
     }
 
     function testClaim() public {
+        uint256 vaultAssetBalanceBefore = IERC20(IVaultV2(vaultAddr).asset()).balanceOf(vaultAddr);
+
         vm.expectEmit();
         emit IERC4626MerklAdapter.ClaimRewards(rewardToken, rewardAmount);
 
         vm.expectEmit();
         emit IERC4626MerklAdapter.SwapRewards(lifiDiamond, rewardToken, rewardAmount, swapData);
-
-        uint256 vaultAssetBalanceBefore = IERC20(IVaultV2(vaultAddr).asset()).balanceOf(vaultAddr);
 
         // Claim and swap Merkl rewards
         vm.prank(rewardClaimer);
