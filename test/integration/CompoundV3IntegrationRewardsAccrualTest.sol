@@ -28,6 +28,6 @@ contract CompoundV3IntegrationRewardsAccrualTest is CompoundV3IntegrationTest {
         skip(elapsed);
         uint256 rewardsAfter = cometRewards.getRewardOwed(address(comet), address(compoundAdapter)).owed;
 
-        assertGe(rewardsAfter, rewardsBefore);       
+        assertGe(rewardsAfter, rewardsBefore);
     }
 }

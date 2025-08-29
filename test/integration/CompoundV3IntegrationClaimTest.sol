@@ -45,8 +45,9 @@ contract CompoundV3IntegrationClaimTest is CompoundV3IntegrationTest {
         super.setUp();
 
         // Deploy an apdater with parent vault being `vaultAddr` and etch code to `adapterAddr`
-        compoundAdapter =
-            ICompoundV3Adapter(compoundAdapterFactory.createCompoundV3Adapter(vaultAddr, address(comet), address(cometRewards)));
+        compoundAdapter = ICompoundV3Adapter(
+            compoundAdapterFactory.createCompoundV3Adapter(vaultAddr, address(comet), address(cometRewards))
+        );
         vm.etch(adapterAddr, address(compoundAdapter).code);
 
         vm.expectEmit();
