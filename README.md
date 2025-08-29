@@ -1,9 +1,9 @@
 # Debt Fund Vault V2
 
-**Debt Fund Vault V2** is a fork of [Morpho Vault v2](https://github.com/morpho-org/vault-v2) that extends the original protocol with two powerful new adapters:
+**Debt Fund Vault V2** is a fork of [Morpho Vault v2](https://github.com/morpho-org/vault-v2) that extends the original protocol with two new adapters:
 
-- **Compound V3 Adapter** - Direct integration with Compound V3
-- **ERC4626 Merkl Adapter** - Support for any ERC4626-compliant protocol with Merkl rewards
+- **Compound V3 Adapter** - Direct integration with Compound Comet V3
+- **ERC4626 Merkl Adapter** - Support for any ERC4626-compliant protocol with Merkl eligible rewards
 
 This enables more flexible asset allocation strategies while maintaining the core benefits of Morpho Vault v2: depositors earn from underlying protocols without actively managing risk positions, while robust role-based systems handle asset allocation and risk management.
 
@@ -23,7 +23,7 @@ All the contracts are immutable.
 Vaults can allocate assets to arbitrary protocols and markets via adapters, or use an adapter registry to add restrictions to allowed adapters.
 The curator enables adapters to hold positions on behalf of the vault.
 Adapters are also used to know how much these investments are worth (interest and loss realization).
-Because adapters hold positions in protocols where assets are allocated, they are susceptible to accrue [Rewards](#Rewards) for those protocols. 
+Because adapters hold positions in protocols where assets are allocated, they are susceptible to accrue [Rewards](#Rewards) for those protocols.
 
 Adapters for the following protocols are currently available:
 
@@ -118,7 +118,7 @@ This gate is critical because it can prevent people from receiving their assets 
 
 **Send Assets Gate** (`sendAssetsGate`): Controls permissions related to sending assets.
 
-Upon `deposit`/`mint`, `canSendAssets` must return true for  `msg.sender` must pass the `canSendAssets` check.
+Upon `deposit`/`mint`, `canSendAssets` must return true for `msg.sender` must pass the `canSendAssets` check.
 
 ### Roles
 
@@ -191,22 +191,24 @@ It can:
 
 ### Rewards management
 
-In Debt Fund Vault V2, all adapters automatically claim and process rewards for the vault's benefit.
+In Debt Fund Vault V2, all eligible adapters automatically claim and process rewards for the vault's benefit.
 
-### Claiming rewards
+#### Claiming rewards
 
-To ensure that those rewards can be retrieved, the Compound V3 and ERC4626 Merkl adapters have a claim function that can be called by the autorized claimers. All claimed rewards are instantly swapped to USDC, and transfer them to the vault for consistent value accrual. 
+To ensure that those rewards can be retrieved, the Compound V3 and ERC4626 Merkl adapters have a claim function that can be called by the autorized claimer. All claimed rewards are instantly swapped to USDC, and transfer them to the vault for consistent value accrual.
 
 While both adapters share the same claim function interface, their underlying reward claiming mechanisms differ:
 
-- Compound V3 Adapter uses onchain rewards distribution as rewards are accrued every second.
-- ERC4626 Merkl Adapter allows claiming rewards via Merkl protocol using merkle proofs. The claimer needs to generate merkle proofs on Merkl to be able to claim rewards.
+- Compound V3 Adapter uses onchain rewards distribution as rewards are accrued every second (see [CometRewards](https://etherscan.io/address/0x1B0e765F6224C21223AeA2af16c1C46E38885a40#code) logic)
+- ERC4626 Merkl Adapter allows claiming rewards via [Merkl Distributor](https://etherscan.io/address/0x0e6590f64a82cbc838b2a087281689de1a5bc8e0#code) using merkle proofs
 
-### Swap to USDC
+#### Swap to USDC
 
-Debt Fund Vault V2 uses [LI.FI](https://li.fi/) to automatically swap all claimed rewards to USDC, routing through the DEX that offers the best quote at execution time.
+Debt Fund Vault V2 recommends to use [LI.FI](https://li.fi/) to automatically swap all claimed rewards to USDC and send it to the vault, routing through the DEX that offers the best quote at execution time.
 
-The offchain claimer is an automated program that runs daily and performs the following tasks:
+To streamline the generation and encoding of the claim data, giving the Merkle proofs and the best swapping route, Byzantine has developped a [dedicated program](https://github.com/Byzantine-Finance/rewards-claimer). Reach out to get access to the repo.
+
+For the eligible vaults, the claimer is an automated program that runs daily and performs the following tasks:
 
 1. **Scan all vault adapters** - Check available rewards for claiming across all connected adapters
 2. **Generate optimal quotes** - Request LI.FI quotes and prepare claim data for execution
