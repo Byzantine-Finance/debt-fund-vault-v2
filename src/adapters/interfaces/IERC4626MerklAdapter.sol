@@ -20,11 +20,6 @@ interface IERC4626MerklAdapter is IAdapter {
         bytes swapData;
     }
 
-    struct ClaimParams {
-        MerklParams merklParams;
-        SwapParams[] swapParams;
-    }
-
     /* EVENTS */
 
     event SetSkimRecipient(address indexed newSkimRecipient);

@@ -107,9 +107,7 @@ contract ERC4626MerklAdapter is IERC4626MerklAdapter {
         require(msg.sender == claimer, NotAuthorized());
 
         // Decode the claim data
-        ClaimParams memory claimParams = abi.decode(data, (ClaimParams));
-        MerklParams memory merklParams = claimParams.merklParams;
-        SwapParams[] memory swapParams = claimParams.swapParams;
+        (MerklParams memory merklParams, SwapParams[] memory swapParams) = abi.decode(data, (MerklParams, SwapParams[]));
 
         // Claim data checks
         require(swapParams.length == merklParams.tokens.length, InvalidData());
