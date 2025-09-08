@@ -54,6 +54,7 @@ contract CompoundV3Adapter is ICompoundV3Adapter {
     /// @dev This is useful to handle rewards that the adapter has earned.
     function skim(address token) external {
         if (msg.sender != skimRecipient) revert NotAuthorized();
+        if (token == comet) revert CannotSkimCompoundToken();
         uint256 balance = IERC20(token).balanceOf(address(this));
         SafeERC20Lib.safeTransfer(token, skimRecipient, balance);
         emit Skim(token, balance);
