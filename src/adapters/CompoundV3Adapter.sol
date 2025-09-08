@@ -97,8 +97,8 @@ contract CompoundV3Adapter is ICompoundV3Adapter {
         // Decode the data
         (address swapper, bytes memory swapData) = abi.decode(data, (address, bytes));
 
-        // Check the swapper contract isn't the comet contract
-        if (swapper == comet) revert SwapperCannotBeComet();
+        // Check the swapper isn't a contract tied to the adapter
+        if (swapper == comet || swapper == parentVault || swapper == cometRewards) revert SwapperCannotBeTiedContract();
 
         // Get assets
         IERC20 rewardToken = IERC20(CometRewardsInterface(cometRewards).rewardConfig(comet).token);

@@ -19,7 +19,7 @@ interface ICompoundV3Adapter is IAdapter {
     error InvalidData();
     error NotAuthorized();
     error SwapReverted();
-    error SwapperCannotBeComet();
+    error SwapperCannotBeTiedContract();
     error RewardsNotReceived();
 
     /* FUNCTIONS */

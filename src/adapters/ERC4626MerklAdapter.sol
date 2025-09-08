@@ -121,8 +121,12 @@ contract ERC4626MerklAdapter is IERC4626MerklAdapter {
 
         IERC20 parentVaultAsset = IERC20(IVaultV2(parentVault).asset());
         for (uint256 i; i < swapParams.length; ++i) {
-            // Check the swapper contract isn't the erc4626Vault
-            require(swapParams[i].swapper != erc4626Vault, SwapperCannotBeUnderlyingVault());
+            // Check the swapper isn't a contract tied to the adapter
+            require(
+                swapParams[i].swapper != erc4626Vault && swapParams[i].swapper != parentVault
+                    && swapParams[i].swapper != MERKL_DISTRIBUTOR,
+                SwapperCannotBeTiedContract()
+            );
 
             // Snapshot for sanity check
             uint256 parentVaultBalanceBefore = parentVaultAsset.balanceOf(parentVault);

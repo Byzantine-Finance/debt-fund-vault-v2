@@ -39,7 +39,7 @@ interface IERC4626MerklAdapter is IAdapter {
     error CannotSkimERC4626Shares();
     error InvalidData();
     error NotAuthorized();
-    error SwapperCannotBeUnderlyingVault();
+    error SwapperCannotBeTiedContract();
     error SwapReverted();
     error RewardsNotReceived();
 
