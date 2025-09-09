@@ -103,7 +103,8 @@ import {IReceiveSharesGate, ISendSharesGate, IReceiveAssetsGate, ISendAssetsGate
 /// the same adapter/data is used for both entry and exit to have the property that in the general case looping
 /// supply-withdraw or withdraw-supply should not change the allocation.
 /// @dev If a cap (absolute or relative) associated with the ids returned by the liquidity adapter on the liquidity data
-/// is reached, deposit/mint will revert.
+/// is reached, deposit/mint will revert. In particular, when the vault is empty or almost empty, the relative cap check
+/// is likely to make deposits revert.
 ///
 /// TOKEN REQUIREMENTS
 /// @dev List of assumptions on the token that guarantees that the vault behaves as expected:
@@ -123,8 +124,8 @@ import {IReceiveSharesGate, ISendSharesGate, IReceiveAssetsGate, ISendAssetsGate
 /// - Adapters must not revert on deallocate if the underlying markets are liquid.
 ///
 /// TIMELOCKS
-/// @dev The timelock of decreaseTimelock is initially set to TIMELOCK_CAP, and can only be changed to type(uint256).max
-/// through abdicateSubmit.
+/// @dev The timelock duration of decreaseTimelock is the timelock duration of the function whose timelock is being
+/// decreased (e.g. the timelock of decreaseTimelock(setIsAdapter, ...) is timelock[setIsAdapter]).
 /// @dev Multiple clashing data can be pending, for example increaseCap and decreaseCap, which can make so accepted
 /// timelocked data can potentially be changed shortly afterwards.
 /// @dev The minimum time in which a function can be called is the following:
@@ -135,6 +136,9 @@ import {IReceiveSharesGate, ISendSharesGate, IReceiveAssetsGate, ISendAssetsGate
 /// ).
 /// @dev Nothing is checked on the timelocked data, so it could be not executable (function does not exist, argument
 /// encoding is wrong, function' conditions are not met, etc.).
+/// @dev The number of pending executions for a given selectors is stored in pendingCount[selector].
+/// @dev To be sure that a timelocked function will not be called in the future, require that timelock[selector] ==
+/// type(uint256).max and pendingCount[selector] == 0.
 ///
 /// GATES
 /// @dev Set to 0 to disable a gate.
@@ -171,9 +175,9 @@ import {IReceiveSharesGate, ISendSharesGate, IReceiveAssetsGate, ISendAssetsGate
 /// @dev No-ops are allowed.
 /// @dev NatSpec comments are included only when they bring clarity.
 /// @dev The contract uses transient storage.
-/// @dev At creation, all settings are set to their default values. Notably, timelocks are zero (except the
-/// decreaseTimelock timelock) which is useful to set up the vault quickly. Also, there are no gates so anybody can
-/// interact with the vault. To prevent that, the gates configuration can be batched with the vault creation.
+/// @dev At creation, all settings are set to their default values. Notably, timelocks are zero which is useful to set
+/// up the vault quickly. Also, there are no gates so anybody can interact with the vault. To prevent that, the gates
+/// configuration can be batched with the vault creation.
 contract VaultV2 is IVaultV2 {
     using MathLib for uint256;
     using MathLib for uint128;
@@ -229,6 +233,7 @@ contract VaultV2 is IVaultV2 {
 
     mapping(bytes4 selector => uint256) public timelock;
     mapping(bytes data => uint256) public executableAt;
+    mapping(bytes4 selector => uint256) public pendingCount;
 
     /* FEES STORAGE */
 
@@ -290,7 +295,6 @@ contract VaultV2 is IVaultV2 {
         uint256 decimalOffset = uint256(18).zeroFloorSub(assetDecimals);
         decimals = uint8(assetDecimals + decimalOffset);
         virtualShares = 10 ** decimalOffset;
-        timelock[IVaultV2.decreaseTimelock.selector] = TIMELOCK_CAP;
         emit EventsLib.Constructor(_owner, _asset);
     }
 
@@ -328,28 +332,36 @@ contract VaultV2 is IVaultV2 {
 
     /* TIMELOCKS FOR CURATOR FUNCTIONS */
 
+    /// @dev Will revert if the timelock value is type(uint256).max or any value that overflows when added to the block
+    /// timestamp.
     function submit(bytes calldata data) external {
-        bytes4 selector = bytes4(data);
         require(msg.sender == curator, ErrorsLib.Unauthorized());
         require(executableAt[data] == 0, ErrorsLib.DataAlreadyPending());
-        require(timelock[selector] != type(uint256).max, ErrorsLib.Abdicated());
 
-        executableAt[data] = block.timestamp + timelock[selector];
-        emit EventsLib.Submit(selector, data, executableAt[data]);
+        bytes4 selector = bytes4(data);
+        uint256 _timelock =
+            selector == IVaultV2.decreaseTimelock.selector ? timelock[bytes4(data[4:8])] : timelock[selector];
+        executableAt[data] = block.timestamp + _timelock;
+        pendingCount[selector]++;
+        emit EventsLib.Submit(selector, data, executableAt[data], pendingCount[selector]);
     }
 
     function timelocked() internal {
         require(executableAt[msg.data] != 0, ErrorsLib.DataNotTimelocked());
         require(block.timestamp >= executableAt[msg.data], ErrorsLib.TimelockNotExpired());
         executableAt[msg.data] = 0;
-        emit EventsLib.Accept(bytes4(msg.data), msg.data);
+        bytes4 selector = bytes4(msg.data);
+        pendingCount[selector]--;
+        emit EventsLib.Accept(selector, msg.data, pendingCount[selector]);
     }
 
     function revoke(bytes calldata data) external {
         require(msg.sender == curator || isSentinel[msg.sender], ErrorsLib.Unauthorized());
         require(executableAt[data] != 0, ErrorsLib.DataNotTimelocked());
         executableAt[data] = 0;
-        emit EventsLib.Revoke(msg.sender, bytes4(data), data);
+        bytes4 selector = bytes4(data);
+        pendingCount[selector]--;
+        emit EventsLib.Revoke(msg.sender, selector, data, pendingCount[selector]);
     }
 
     /* CURATOR FUNCTIONS */
@@ -428,29 +440,21 @@ contract VaultV2 is IVaultV2 {
         emit EventsLib.RemoveAdapter(account);
     }
 
+    /// @dev This function requires great caution because it can irreversibly disable submit for a selector.
+    /// @dev Existing pending operations submitted before increasing a timelock can still be executed at the initial
+    /// executableAt.
     function increaseTimelock(bytes4 selector, uint256 newDuration) external {
-        require(msg.sender == curator, ErrorsLib.Unauthorized());
-        require(newDuration <= TIMELOCK_CAP, ErrorsLib.TimelockDurationTooHigh());
+        timelocked();
+        require(selector != IVaultV2.decreaseTimelock.selector, ErrorsLib.AutomaticallyTimelocked());
         require(newDuration >= timelock[selector], ErrorsLib.TimelockNotIncreasing());
 
         timelock[selector] = newDuration;
         emit EventsLib.IncreaseTimelock(selector, newDuration);
     }
 
-    /// @dev Irreversibly disable submit for a selector.
-    /// @dev Be particularly careful as this action is not reversible.
-    /// @dev Existing timelocked operations submitted before abdicating the selector can still be executed. The
-    /// abdication of a selector only prevents future operations to be submitted.
-    function abdicateSubmit(bytes4 selector) external {
-        timelocked();
-        timelock[selector] = type(uint256).max;
-        emit EventsLib.AbdicateSubmit(selector);
-    }
-
     function decreaseTimelock(bytes4 selector, uint256 newDuration) external {
         timelocked();
-        require(selector != IVaultV2.decreaseTimelock.selector, ErrorsLib.TimelockCapIsFixed());
-        require(timelock[selector] != type(uint256).max, ErrorsLib.Abdicated());
+        require(selector != IVaultV2.decreaseTimelock.selector, ErrorsLib.AutomaticallyTimelocked());
         require(newDuration <= timelock[selector], ErrorsLib.TimelockNotDecreasing());
 
         timelock[selector] = newDuration;

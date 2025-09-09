@@ -39,6 +39,7 @@ interface IVaultV2 is IERC4626, IERC2612 {
     function liquidityData() external view returns (bytes memory);
     function timelock(bytes4 selector) external view returns (uint256);
     function executableAt(bytes memory data) external view returns (uint256);
+    function pendingCount(bytes4 selector) external view returns (uint256);
     function performanceFee() external view returns (uint96);
     function performanceFeeRecipient() external view returns (address);
     function managementFee() external view returns (uint96);
@@ -74,7 +75,6 @@ interface IVaultV2 is IERC4626, IERC2612 {
     function addAdapter(address account) external;
     function removeAdapter(address account) external;
     function increaseTimelock(bytes4 selector, uint256 newDuration) external;
-    function abdicateSubmit(bytes4 selector) external;
     function decreaseTimelock(bytes4 selector, uint256 newDuration) external;
     function setPerformanceFee(uint256 newPerformanceFee) external;
     function setManagementFee(uint256 newManagementFee) external;
