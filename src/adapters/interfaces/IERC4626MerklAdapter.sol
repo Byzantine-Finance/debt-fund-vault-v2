@@ -17,6 +17,7 @@ interface IERC4626MerklAdapter is IAdapter {
 
     struct SwapParams {
         address swapper;
+        uint256 minAmountOut;
         bytes swapData;
     }
 
@@ -36,7 +37,7 @@ interface IERC4626MerklAdapter is IAdapter {
     error NotAuthorized();
     error SwapperCannotBeTiedContract();
     error SwapReverted();
-    error RewardsNotReceived();
+    error SlippageTooHigh();
 
     /* FUNCTIONS */
 

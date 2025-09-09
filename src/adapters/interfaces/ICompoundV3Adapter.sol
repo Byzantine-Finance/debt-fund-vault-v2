@@ -21,7 +21,7 @@ interface ICompoundV3Adapter is IAdapter {
     error CannotSkimCompoundToken();
     error SwapReverted();
     error SwapperCannotBeTiedContract();
-    error RewardsNotReceived();
+    error SlippageTooHigh();
 
     /* FUNCTIONS */
 

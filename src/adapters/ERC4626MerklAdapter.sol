@@ -138,7 +138,7 @@ contract ERC4626MerklAdapter is IERC4626MerklAdapter {
 
             // Check if the parent vault received them
             uint256 parentVaultBalanceAfter = parentVaultAsset.balanceOf(parentVault);
-            require(parentVaultBalanceAfter > parentVaultBalanceBefore, RewardsNotReceived());
+            require(parentVaultBalanceAfter >= parentVaultBalanceBefore + swapParams[i].minAmountOut, SlippageTooHigh());
 
             emit ClaimRewards(merklParams.tokens[i], merklParams.amounts[i]);
             emit SwapRewards(swapParams[i].swapper, merklParams.tokens[i], swappedAmount, swapParams[i].swapData);

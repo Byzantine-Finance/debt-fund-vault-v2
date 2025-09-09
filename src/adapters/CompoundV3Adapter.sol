@@ -96,7 +96,7 @@ contract CompoundV3Adapter is ICompoundV3Adapter {
         if (msg.sender != claimer) revert NotAuthorized();
 
         // Decode the data
-        (address swapper, bytes memory swapData) = abi.decode(data, (address, bytes));
+        (address swapper, uint256 minAmountOut, bytes memory swapData) = abi.decode(data, (address, uint256, bytes));
 
         // Check the swapper isn't a contract tied to the adapter
         if (swapper == comet || swapper == parentVault || swapper == cometRewards) revert SwapperCannotBeTiedContract();
@@ -122,7 +122,7 @@ contract CompoundV3Adapter is ICompoundV3Adapter {
 
         // Check if the parent vault received them
         balanceAfter = parentVaultAsset.balanceOf(parentVault);
-        require(balanceAfter > balanceBefore, RewardsNotReceived());
+        require(balanceAfter >= balanceBefore + minAmountOut, SlippageTooHigh());
 
         emit Claim(address(rewardToken), claimedAmount);
         emit SwapRewards(swapper, address(rewardToken), swappedAmount, swapData);
