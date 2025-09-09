@@ -9,7 +9,7 @@ interface ICompoundV3Adapter is IAdapter {
     /* EVENTS */
 
     event SetClaimer(address indexed newClaimer);
-    event Claim(address indexed token, uint256 amount);
+    event ClaimRewards(address indexed token, uint256 amount);
     event SetSkimRecipient(address indexed newSkimRecipient);
     event Skim(address indexed token, uint256 assets);
     event SwapRewards(address indexed swapper, address indexed token, uint256 amount, bytes data);
@@ -18,9 +18,10 @@ interface ICompoundV3Adapter is IAdapter {
 
     error InvalidData();
     error NotAuthorized();
+    error CannotSkimCompoundToken();
     error SwapReverted();
-    error SwapperCannotBeComet();
-    error RewardsNotReceived();
+    error SwapperCannotBeTiedContract();
+    error SlippageTooHigh();
 
     /* FUNCTIONS */
 

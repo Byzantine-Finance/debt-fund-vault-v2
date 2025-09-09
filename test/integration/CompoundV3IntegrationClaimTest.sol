@@ -73,7 +73,7 @@ contract CompoundV3IntegrationClaimTest is CompoundV3IntegrationTest {
         uint256 vaultAssetBalanceBefore = IERC20(IVaultV2(vaultAddr).asset()).balanceOf(vaultAddr);
 
         vm.expectEmit();
-        emit ICompoundV3Adapter.Claim(rewardToken, rewardAmount);
+        emit ICompoundV3Adapter.ClaimRewards(rewardToken, rewardAmount);
 
         vm.expectEmit();
         emit ICompoundV3Adapter.SwapRewards(lifiDiamond, rewardToken, rewardAmount, swapData);
@@ -89,6 +89,37 @@ contract CompoundV3IntegrationClaimTest is CompoundV3IntegrationTest {
 
         assertEq(cometRewards.rewardsClaimed(address(comet), address(adapterAddr)), rewardAmount);
         assertEq(cometRewards.getRewardOwed(address(comet), address(adapterAddr)).owed, 0);
+    }
+
+    function testSetClaimerNotAuthorizedReverts(address newClaimer) public {
+        vm.expectRevert(ICompoundV3Adapter.NotAuthorized.selector);
+        ICompoundV3Adapter(adapterAddr).setClaimer(newClaimer);
+    }
+
+    function testClaimNotAuthorizedReverts(bytes memory data) public {
+        vm.expectRevert(ICompoundV3Adapter.NotAuthorized.selector);
+        ICompoundV3Adapter(adapterAddr).claim(data);
+    }
+
+    function testClaimSwapperCannotBeTiedContractReverts() public {
+        vm.expectRevert(ICompoundV3Adapter.SwapperCannotBeTiedContract.selector);
+        vm.prank(claimer);
+        ICompoundV3Adapter(adapterAddr).claim(abi.encode(address(baseComet), usdcMinAmountReceived, swapData));
+
+        vm.expectRevert(ICompoundV3Adapter.SwapperCannotBeTiedContract.selector);
+        vm.prank(claimer);
+        ICompoundV3Adapter(adapterAddr).claim(abi.encode(address(vaultAddr), usdcMinAmountReceived, swapData));
+
+        vm.expectRevert(ICompoundV3Adapter.SwapperCannotBeTiedContract.selector);
+        vm.prank(claimer);
+        ICompoundV3Adapter(adapterAddr).claim(abi.encode(address(baseCometRewards), usdcMinAmountReceived, swapData));
+    }
+
+    function testClaimSwapRevertedReverts() public {
+        bytes memory dataWithInvalidData = abi.encode(compoundAdapter, usdcMinAmountReceived, swapData);
+        vm.expectRevert(ICompoundV3Adapter.SwapReverted.selector);
+        vm.prank(claimer);
+        ICompoundV3Adapter(adapterAddr).claim(dataWithInvalidData);
     }
 
     function _loadClaimData(string memory _path) internal {

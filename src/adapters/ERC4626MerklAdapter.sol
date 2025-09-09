@@ -107,9 +107,7 @@ contract ERC4626MerklAdapter is IERC4626MerklAdapter {
         require(msg.sender == claimer, NotAuthorized());
 
         // Decode the claim data
-        ClaimParams memory claimParams = abi.decode(data, (ClaimParams));
-        MerklParams memory merklParams = claimParams.merklParams;
-        SwapParams[] memory swapParams = claimParams.swapParams;
+        (MerklParams memory merklParams, SwapParams[] memory swapParams) = abi.decode(data, (MerklParams, SwapParams[]));
 
         // Claim data checks
         require(swapParams.length == merklParams.tokens.length, InvalidData());
@@ -121,8 +119,12 @@ contract ERC4626MerklAdapter is IERC4626MerklAdapter {
 
         IERC20 parentVaultAsset = IERC20(IVaultV2(parentVault).asset());
         for (uint256 i; i < swapParams.length; ++i) {
-            // Check the swapper contract isn't the erc4626Vault
-            require(swapParams[i].swapper != erc4626Vault, SwapperCannotBeUnderlyingVault());
+            // Check the swapper isn't a contract tied to the adapter
+            require(
+                swapParams[i].swapper != erc4626Vault && swapParams[i].swapper != parentVault
+                    && swapParams[i].swapper != MERKL_DISTRIBUTOR,
+                SwapperCannotBeTiedContract()
+            );
 
             // Snapshot for sanity check
             uint256 parentVaultBalanceBefore = parentVaultAsset.balanceOf(parentVault);
@@ -136,7 +138,7 @@ contract ERC4626MerklAdapter is IERC4626MerklAdapter {
 
             // Check if the parent vault received them
             uint256 parentVaultBalanceAfter = parentVaultAsset.balanceOf(parentVault);
-            require(parentVaultBalanceAfter > parentVaultBalanceBefore, RewardsNotReceived());
+            require(parentVaultBalanceAfter >= parentVaultBalanceBefore + swapParams[i].minAmountOut, SlippageTooHigh());
 
             emit ClaimRewards(merklParams.tokens[i], merklParams.amounts[i]);
             emit SwapRewards(swapParams[i].swapper, merklParams.tokens[i], swappedAmount, swapParams[i].swapData);

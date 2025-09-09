@@ -54,6 +54,7 @@ contract CompoundV3Adapter is ICompoundV3Adapter {
     /// @dev This is useful to handle rewards that the adapter has earned.
     function skim(address token) external {
         if (msg.sender != skimRecipient) revert NotAuthorized();
+        if (token == comet) revert CannotSkimCompoundToken();
         uint256 balance = IERC20(token).balanceOf(address(this));
         SafeERC20Lib.safeTransfer(token, skimRecipient, balance);
         emit Skim(token, balance);
@@ -95,10 +96,10 @@ contract CompoundV3Adapter is ICompoundV3Adapter {
         if (msg.sender != claimer) revert NotAuthorized();
 
         // Decode the data
-        (address swapper, bytes memory swapData) = abi.decode(data, (address, bytes));
+        (address swapper, uint256 minAmountOut, bytes memory swapData) = abi.decode(data, (address, uint256, bytes));
 
-        // Check the swapper contract isn't the comet contract
-        if (swapper == comet) revert SwapperCannotBeComet();
+        // Check the swapper isn't a contract tied to the adapter
+        if (swapper == comet || swapper == parentVault || swapper == cometRewards) revert SwapperCannotBeTiedContract();
 
         // Get assets
         IERC20 rewardToken = IERC20(CometRewardsInterface(cometRewards).rewardConfig(comet).token);
@@ -114,16 +115,16 @@ contract CompoundV3Adapter is ICompoundV3Adapter {
         balanceBefore = parentVaultAsset.balanceOf(parentVault);
 
         // Swap the rewards
-        SafeERC20Lib.safeApprove(address(rewardToken), swapper, claimedAmount);
+        SafeERC20Lib.safeApprove(address(rewardToken), swapper, balanceAfter);
         (bool success,) = swapper.call(swapData);
         require(success, SwapReverted());
         uint256 swappedAmount = balanceAfter - rewardToken.balanceOf(address(this));
 
         // Check if the parent vault received them
         balanceAfter = parentVaultAsset.balanceOf(parentVault);
-        require(balanceAfter > balanceBefore, RewardsNotReceived());
+        require(balanceAfter >= balanceBefore + minAmountOut, SlippageTooHigh());
 
-        emit Claim(address(rewardToken), claimedAmount);
+        emit ClaimRewards(address(rewardToken), claimedAmount);
         emit SwapRewards(swapper, address(rewardToken), swappedAmount, swapData);
     }
 
