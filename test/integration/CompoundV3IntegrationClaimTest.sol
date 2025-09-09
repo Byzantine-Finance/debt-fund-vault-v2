@@ -73,7 +73,7 @@ contract CompoundV3IntegrationClaimTest is CompoundV3IntegrationTest {
         uint256 vaultAssetBalanceBefore = IERC20(IVaultV2(vaultAddr).asset()).balanceOf(vaultAddr);
 
         vm.expectEmit();
-        emit ICompoundV3Adapter.Claim(rewardToken, rewardAmount);
+        emit ICompoundV3Adapter.ClaimRewards(rewardToken, rewardAmount);
 
         vm.expectEmit();
         emit ICompoundV3Adapter.SwapRewards(lifiDiamond, rewardToken, rewardAmount, swapData);

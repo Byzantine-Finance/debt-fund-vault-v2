@@ -124,7 +124,7 @@ contract CompoundV3Adapter is ICompoundV3Adapter {
         balanceAfter = parentVaultAsset.balanceOf(parentVault);
         require(balanceAfter >= balanceBefore + minAmountOut, SlippageTooHigh());
 
-        emit Claim(address(rewardToken), claimedAmount);
+        emit ClaimRewards(address(rewardToken), claimedAmount);
         emit SwapRewards(swapper, address(rewardToken), swappedAmount, swapData);
     }
 
