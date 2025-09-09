@@ -6,6 +6,7 @@ pragma solidity ^0.8.0;
 import {VaultV2Factory, IVaultV2Factory} from "../../src/VaultV2Factory.sol";
 import {IVaultV2, IERC4626, IERC20} from "../../src/interfaces/IVaultV2.sol";
 import "../../src/libraries/ConstantsLib.sol";
+import {ERC20Mock} from "../mocks/ERC20Mock.sol";
 
 import {
     ERC4626MerklAdapterFactory, IERC4626MerklAdapterFactory
@@ -15,6 +16,7 @@ import {IERC4626MerklAdapter} from "../../src/adapters/interfaces/IERC4626MerklA
 import {Test, console2} from "../../lib/forge-std/src/Test.sol";
 
 contract ERC4626MerklAdapterIntegrationTest is Test {
+    uint256 internal constant MIN_TEST_ASSETS = 10;
     uint256 constant MAX_TEST_ASSETS = 1e18;
 
     // Fork variables
@@ -110,6 +112,17 @@ contract ERC4626MerklAdapterIntegrationTest is Test {
         // Fund user with USDC for testing
         deal(address(usdc), address(this), MAX_TEST_ASSETS);
         usdc.approve(address(vault), type(uint256).max);
+    }
+
+    function testCreateERC4626MerklAdapterAssetMismatchReverts() public {
+        // create a new vault with a non USDC asset
+        ERC20Mock newToken = new ERC20Mock(18);
+        IVaultV2 newTokenVault = IVaultV2(vaultFactory.createVaultV2(owner, address(newToken), bytes32(0)));
+
+        vm.expectRevert(IERC4626MerklAdapter.AssetMismatch.selector);
+        IERC4626MerklAdapter(
+            erc4626MerklAdapterFactory.createERC4626MerklAdapter(address(newTokenVault), address(stataUSDC))
+        );
     }
 
     function _addAdapter(address adapter) internal {

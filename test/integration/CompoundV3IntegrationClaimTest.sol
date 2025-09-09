@@ -91,6 +91,37 @@ contract CompoundV3IntegrationClaimTest is CompoundV3IntegrationTest {
         assertEq(cometRewards.getRewardOwed(address(comet), address(adapterAddr)).owed, 0);
     }
 
+    function testSetClaimerNotAuthorizedReverts(address newClaimer) public {
+        vm.expectRevert(ICompoundV3Adapter.NotAuthorized.selector);
+        ICompoundV3Adapter(adapterAddr).setClaimer(newClaimer);
+    }
+
+    function testClaimNotAuthorizedReverts(bytes memory data) public {
+        vm.expectRevert(ICompoundV3Adapter.NotAuthorized.selector);
+        ICompoundV3Adapter(adapterAddr).claim(data);
+    }
+
+    function testClaimSwapperCannotBeTiedContractReverts() public {
+        vm.expectRevert(ICompoundV3Adapter.SwapperCannotBeTiedContract.selector);
+        vm.prank(claimer);
+        ICompoundV3Adapter(adapterAddr).claim(abi.encode(address(baseComet), swapData));
+
+        vm.expectRevert(ICompoundV3Adapter.SwapperCannotBeTiedContract.selector);
+        vm.prank(claimer);
+        ICompoundV3Adapter(adapterAddr).claim(abi.encode(address(vaultAddr), swapData));
+
+        vm.expectRevert(ICompoundV3Adapter.SwapperCannotBeTiedContract.selector);
+        vm.prank(claimer);
+        ICompoundV3Adapter(adapterAddr).claim(abi.encode(address(baseCometRewards), swapData));
+    }
+
+    function testClaimSwapRevertedReverts() public {
+        bytes memory dataWithInvalidData = abi.encode(compoundAdapter, swapData);
+        vm.expectRevert(ICompoundV3Adapter.SwapReverted.selector);
+        vm.prank(claimer);
+        ICompoundV3Adapter(adapterAddr).claim(dataWithInvalidData);
+    }
+
     function _loadClaimData(string memory _path) internal {
         string memory json = vm.readFile(_path);
 
