@@ -15,6 +15,7 @@ import {IERC4626MerklAdapter} from "../../src/adapters/interfaces/IERC4626MerklA
 import {Test, console2} from "../../lib/forge-std/src/Test.sol";
 
 contract ERC4626MerklAdapterIntegrationTest is Test {
+    uint256 internal constant MIN_TEST_ASSETS = 10;
     uint256 constant MAX_TEST_ASSETS = 1e18;
 
     // Fork variables

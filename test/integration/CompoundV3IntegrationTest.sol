@@ -18,6 +18,7 @@ import {CometRewardsInterface} from "../../src/interfaces/CometRewardsInterface.
 import {Test, console2} from "../../lib/forge-std/src/Test.sol";
 
 contract CompoundV3IntegrationTest is Test {
+    uint256 internal constant MIN_TEST_ASSETS = 10;
     uint256 constant MAX_TEST_ASSETS = 1e18;
 
     // Fork variables
@@ -77,6 +78,7 @@ contract CompoundV3IntegrationTest is Test {
         expectedAdapterIdData = abi.encode("this", address(compoundAdapter));
         expectedAdapterId = keccak256(expectedAdapterIdData);
         vm.label(address(compoundAdapter), "compoundAdapter");
+        assertEq(compoundAdapter.ids()[0], expectedAdapterId);
 
         vm.startPrank(owner);
         vault.setCurator(curator);
