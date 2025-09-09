@@ -6,7 +6,7 @@ pragma solidity ^0.8.0;
 import "./CompoundV3IntegrationTest.sol";
 import {ICompoundV3Adapter} from "../../src/adapters/interfaces/ICompoundV3Adapter.sol";
 
-contract CompoundV3IntegrationAllocationTest is CompoundV3IntegrationTest {
+contract CompoundV3IntegrationRevertTest is CompoundV3IntegrationTest {
     function testAllocateNotAuthorizedReverts(uint256 assets) public {
         assets = bound(assets, 0, MAX_TEST_ASSETS);
         vm.expectRevert(ICompoundV3Adapter.NotAuthorized.selector);

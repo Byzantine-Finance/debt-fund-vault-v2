@@ -104,19 +104,19 @@ contract CompoundV3IntegrationClaimTest is CompoundV3IntegrationTest {
     function testClaimSwapperCannotBeTiedContractReverts() public {
         vm.expectRevert(ICompoundV3Adapter.SwapperCannotBeTiedContract.selector);
         vm.prank(claimer);
-        ICompoundV3Adapter(adapterAddr).claim(abi.encode(address(baseComet), swapData));
+        ICompoundV3Adapter(adapterAddr).claim(abi.encode(address(baseComet), usdcMinAmountReceived, swapData));
 
         vm.expectRevert(ICompoundV3Adapter.SwapperCannotBeTiedContract.selector);
         vm.prank(claimer);
-        ICompoundV3Adapter(adapterAddr).claim(abi.encode(address(vaultAddr), swapData));
+        ICompoundV3Adapter(adapterAddr).claim(abi.encode(address(vaultAddr), usdcMinAmountReceived, swapData));
 
         vm.expectRevert(ICompoundV3Adapter.SwapperCannotBeTiedContract.selector);
         vm.prank(claimer);
-        ICompoundV3Adapter(adapterAddr).claim(abi.encode(address(baseCometRewards), swapData));
+        ICompoundV3Adapter(adapterAddr).claim(abi.encode(address(baseCometRewards), usdcMinAmountReceived, swapData));
     }
 
     function testClaimSwapRevertedReverts() public {
-        bytes memory dataWithInvalidData = abi.encode(compoundAdapter, swapData);
+        bytes memory dataWithInvalidData = abi.encode(compoundAdapter, usdcMinAmountReceived, swapData);
         vm.expectRevert(ICompoundV3Adapter.SwapReverted.selector);
         vm.prank(claimer);
         ICompoundV3Adapter(adapterAddr).claim(dataWithInvalidData);
