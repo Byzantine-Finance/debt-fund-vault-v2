@@ -98,8 +98,9 @@ contract CompoundV3Adapter is ICompoundV3Adapter {
         // Decode the data
         (address swapper, uint256 minAmountOut, bytes memory swapData) = abi.decode(data, (address, uint256, bytes));
 
-        // Check the swapper isn't a contract tied to the adapter
+        // Verify the swapping data
         if (swapper == comet || swapper == parentVault || swapper == cometRewards) revert SwapperCannotBeTiedContract();
+        if (minAmountOut == 0) revert InvalidData();
 
         // Get assets
         IERC20 rewardToken = IERC20(CometRewardsInterface(cometRewards).rewardConfig(comet).token);
@@ -118,6 +119,7 @@ contract CompoundV3Adapter is ICompoundV3Adapter {
         SafeERC20Lib.safeApprove(address(rewardToken), swapper, balanceAfter);
         (bool success,) = swapper.call(swapData);
         require(success, SwapReverted());
+        SafeERC20Lib.safeApprove(address(rewardToken), swapper, 0);
         uint256 swappedAmount = balanceAfter - rewardToken.balanceOf(address(this));
 
         // Check if the parent vault received them
