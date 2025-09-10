@@ -119,6 +119,7 @@ contract CompoundV3Adapter is ICompoundV3Adapter {
         SafeERC20Lib.safeApprove(address(rewardToken), swapper, balanceAfter);
         (bool success,) = swapper.call(swapData);
         require(success, SwapReverted());
+        SafeERC20Lib.safeApprove(address(rewardToken), swapper, 0);
         uint256 swappedAmount = balanceAfter - rewardToken.balanceOf(address(this));
 
         // Check if the parent vault received them
