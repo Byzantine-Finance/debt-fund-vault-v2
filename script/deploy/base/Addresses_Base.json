@@ -1,13 +1,13 @@
 {
   "addresses": {
-    "compoundV3AdapterFactory": "0x318934C80f2B84073798239A2f1E5143BC2446BF",
-    "erc4626AdapterFactory": "0x175F0e9FCB2E4a1cE82c636F884A07B2941D3d56",
-    "erc4626MerklAdapterFactory": "0x8Ff5B5f692215E6d6aED0Ec45d5720cCa137a16B",
-    "morphoMarketV1AdapterFactory": "0x91CA535e5d8de79C9d1379158ef599D4Df2805E3",
-    "vaultV2Factory": "0x7661DEA044427A2610FFF11C3212e879F5aa54d4"
+    "compoundV3AdapterFactory": "0xA4dF9668EE53A896BdF40A7AeAC1364129F3c168",
+    "erc4626AdapterFactory": "0x0f52A6D95d1C29806696FfaC4EB9F563e90faB9B",
+    "erc4626MerklAdapterFactory": "0xdF311B93f922867A686abA9b233Fd7C65d66f83d",
+    "morphoMarketV1AdapterFactory": "0x96E2F9E6077C9B8FcA5Bb0F31F7A977ffC047F6E",
+    "vaultV2Factory": "0x712F50e2A19f2312DC1C7995e160773D568e1319"
   },
   "chainInfo": {
     "chainId": 8453,
-    "deploymentBlock": 35319496
+    "deploymentBlock": 35580676
   }
 }
