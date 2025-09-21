@@ -54,11 +54,11 @@ A typical liquidity adapter would allow deposits/withdrawals to go through a ver
 
 ### Timelocks
 
-Curator configuration changes are all timelockable (except `decreaseAbsoluteCap` and ), meaning that doing an action requires submitting it first, and only when the timelock has passed it can be executed (by anyone).
+Curator configuration changes are all timelockable (except `decreaseAbsoluteCap` and `decreaseRelativeCap`), meaning that doing an action requires submitting it first, and only when the timelock has passed it can be executed (by anyone).
 This is useful notably to the [non-custodial guarantees](#non-custodial-guarantees), but also in general if a curator wants to give guarantees about some configurations.
+`increaseTimelock` should be used carefully, because decreaseTimelock is function-dependent: decreasing the timelock of a function is timelocked by the timelock of the function itself.
 
-In particular, a configuration can be _abdicated_, meaning that it won't be able to be set anymore, by setting the timelock to type(uint256).max and making sure that pendingCount for this selector is zero.
-Thus, increaseTimelock should be used carefully, because decreaseTimelock is function-dependent: decreasing the timelock of a function is timelocked by the timelock of the function itself.
+Also, a configuration can be *abdicated*, meaning that it won't be able to be set anymore, by calling `abdicate`.
 
 ### In-kind redemptions
 
@@ -84,9 +84,9 @@ If a gate is not set, its corresponding operations are not restricted.
 Four gates are defined:
 
 - **Receive shares gate** (`receiveSharesGate`): Controls the permission to receive shares.
-- **Send shares gate** (`sendShareGate`): Controls the permission to send shares.
-- **Receive Assets Gate** (`receiveAssetsGate`): Controls permissions related to receiving assets.
-- **Send Assets Gate** (`sendAssetsGate`): Controls permissions related to sending assets.
+- **Send shares gate** (`sendSharesGate`): Controls the permission to send shares.
+- **Receive assets Gate** (`receiveAssetsGate`): Controls permissions related to receiving assets.
+- **Send assets Gate** (`sendAssetsGate`): Controls permissions related to sending assets.
 
 ### Max rate
 
@@ -95,7 +95,7 @@ This can be useful to stabilize the distributed rate, or build a buffer to be ab
 
 ### Fees
 
-VaultV2 depositors are charged with a performance fee, which is a cut on interest (capped at 50%), and a management fee (capped at 5%), which is a cut on principal.
+VaultV2 depositors are charged with a performance fee, which is a cut on interest (capped at 50%), and a management fee (capped at 5%/year), which is a cut on principal.
 Each fee goes to its respective recipient set by the curator.
 
 ### Roles
@@ -105,9 +105,9 @@ Each fee goes to its respective recipient set by the curator.
   Only one address can have this role.
 
 - **Curator**: The curator's role is to configure the vault.
-  They can enable and disable [adapters](#adapters) and an optional adapter registry, configure [risk limits](#caps) by setting absolute and relative caps, set the [gates](#gates), the [allocators](#allocators), the [timelocks](#timelocks), the [fees](#fees) and the fee recipients.
-  All actions are timelockable except decreasing absolute and relative caps.
-  Only one address can have this role.
+They can enable and disable [adapters](#adapters) and an optional adapter registry, configure [risk limits](#caps) by setting absolute and relative caps, set the [gates](#gates), the [allocators](#allocators), the [timelocks](#timelocks), the [fees](#fees) and the fee recipients.
+All actions are timelockable except decreasing absolute and relative caps.
+Only one address can have this role.
 
 - **Allocator(s)**: The allocators' role is to handle the vault's allocation in and out of underlying protocols (with the enabled adapters, and within the caps set by the curator).
   They also set the [liquidity adapter](#liquidity) and [max rate](#max-rate).
