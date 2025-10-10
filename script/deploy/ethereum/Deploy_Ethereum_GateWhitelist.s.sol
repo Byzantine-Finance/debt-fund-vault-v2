@@ -15,7 +15,7 @@ import {GateWhitelist} from "../../../src/gate/GateWhitelist.sol";
  * --sig "run(address)" <owner> \
  * --verify -vv
  */
-contract Deploy_Base_GateWhitelist is Script {
+contract Deploy_Ethereum_GateWhitelist is Script {
     GateWhitelist public gateWhitelist;
 
     function run(address owner) external {
