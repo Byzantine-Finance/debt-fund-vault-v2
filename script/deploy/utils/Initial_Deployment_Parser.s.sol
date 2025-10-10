@@ -35,7 +35,8 @@ contract Initial_Deployment_Parser is Script, Test {
 
         // vm.serializeAddress(deployed_addresses, "vaultV2Factory", address(vaultV2Factory));
         vm.serializeAddress(deployed_addresses, "compoundV3AdapterFactory", address(compoundV3AdapterFactory));
-        // vm.serializeAddress(deployed_addresses, "morphoMarketV1AdapterFactory", address(morphoMarketV1AdapterFactory));
+        // vm.serializeAddress(deployed_addresses, "morphoMarketV1AdapterFactory",
+        // address(morphoMarketV1AdapterFactory));
         // vm.serializeAddress(deployed_addresses, "erc4626AdapterFactory", address(erc4626AdapterFactory));
         string memory deployed_addresses_output =
             vm.serializeAddress(deployed_addresses, "erc4626MerklAdapterFactory", address(erc4626MerklAdapterFactory));

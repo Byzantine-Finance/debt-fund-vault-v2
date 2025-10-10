@@ -5,9 +5,8 @@ import "../utils/Initial_Deployment_Parser.s.sol";
 
 /**
  * @notice Script used for the first deployment on Ethereum mainnet
- * forge script script/deploy/ethereum/Deploy_Ethereum_From_Scratch.s.sol --rpc-url $MAINNET_RPC_URL --private-key $PRIVATE_KEY
- * --broadcast --etherscan-api-key $ETHERSCAN_API_KEY --verify -vv
- *
+ * forge script script/deploy/ethereum/Deploy_Ethereum_From_Scratch.s.sol --rpc-url $MAINNET_RPC_URL --private-key
+ * $PRIVATE_KEY --broadcast --etherscan-api-key $ETHERSCAN_API_KEY --verify -vv
  */
 contract Deploy_Ethereum_From_Scratch is Initial_Deployment_Parser {
     function run() external {
