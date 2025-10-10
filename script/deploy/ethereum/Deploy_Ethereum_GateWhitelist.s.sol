@@ -6,16 +6,16 @@ import "forge-std/Script.sol";
 import {GateWhitelist} from "../../../src/gate/GateWhitelist.sol";
 
 /**
- * @notice Script used for the deployment of the GateWhitelist on Base
- * forge script script/deploy/base/Deploy_Base_GateWhitelist.s.sol \
- * --rpc-url $BASE_RPC_URL \
+ * @notice Script used for the deployment of the GateWhitelist on Ethereum
+ * forge script script/deploy/ethereum/Deploy_Ethereum_GateWhitelist.s.sol \
+ * --rpc-url $MAINNET_RPC_URL \
  * --private-key $PRIVATE_KEY \
  * --broadcast \
  * --etherscan-api-key $ETHERSCAN_API_KEY \
  * --sig "run(address)" <owner> \
  * --verify -vv
  */
-contract Deploy_Base_GateWhitelist is Script {
+contract Deploy_Ethereum_GateWhitelist is Script {
     GateWhitelist public gateWhitelist;
 
     function run(address owner) external {

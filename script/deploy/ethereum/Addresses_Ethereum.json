@@ -1,0 +1,10 @@
+{
+  "addresses": {
+    "compoundV3AdapterFactory": "0x60a91D7F17046FB1B1C9360E1C5D68b7E94E5959",
+    "erc4626MerklAdapterFactory": "0x576136011496367C7FEF780445349060646C7cC1"
+  },
+  "chainInfo": {
+    "chainId": 1,
+    "deploymentBlock": 23532270
+  }
+}
